@@ -141,13 +141,12 @@ const YouTubeBoost = () => {
   // Boost progress effect with subscriber drip
   useEffect(() => {
     if (isBoostActive && targetSubscribers > 0) {
-      const boostDuration = 30 * 60 * 1000; // 30 minutes
-      const increment = 1;
-      const startTime = Date.now();
+      const startTime = Date.now()
+      const duration = 30 * 60 * 1000 // 30 minutes in milliseconds
 
       const progressInterval = setInterval(() => {
-        const elapsedTime = Date.now() - startTime;
-        const progressRatio = Math.min(elapsedTime / boostDuration, 1)
+        const elapsed = Date.now() - startTime
+        const progressRatio = Math.min(elapsed / duration, 1)
         const currentProgress = progressRatio * 100
         
         // Update progress
@@ -262,6 +261,7 @@ const YouTubeBoost = () => {
     setIsBoostActive(true)
     setBoostProgress(0)
     setCurrentSubscribers(parseInt(userSubscribers || "0"))
+    setShowForm(false) // Hide form and show boost dashboard
   }
 
   const handleVerificationClose = () => {

@@ -135,12 +135,12 @@ const TikTokBoost = () => {
   // Boost progress effect with follower drip
   useEffect(() => {
     if (isBoostActive && targetFollowers > 0) {
-      const boostDuration = 30 * 60 * 1000; // 30 minutes
-      const startTime = Date.now();
+      const startTime = Date.now()
+      const duration = 30 * 60 * 1000 // 30 minutes in milliseconds
 
       const progressInterval = setInterval(() => {
-        const elapsedTime = Date.now() - startTime;
-        const progressRatio = Math.min(elapsedTime / boostDuration, 1)
+        const elapsed = Date.now() - startTime
+        const progressRatio = Math.min(elapsed / duration, 1)
         const currentProgress = progressRatio * 100
         
         // Update progress
@@ -217,6 +217,7 @@ const TikTokBoost = () => {
     setIsBoostActive(true)
     setBoostProgress(0)
     setCurrentFollowers(parseInt(userFollowers || "0"))
+    setShowForm(false) // Hide form and show boost dashboard
   }
 
   const handleVerificationClose = () => {

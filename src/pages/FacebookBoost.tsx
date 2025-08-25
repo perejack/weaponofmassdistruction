@@ -233,6 +233,7 @@ const FacebookBoost = () => {
     setBoostProgress(0)
     setCurrentFollowers(parseInt(userFollowers || "0"))
     setVerificationTriggered(false) // Reset verification trigger for new boost
+    setShowForm(false) // Hide form and show boost dashboard
   }
 
   const handleVerificationClose = () => {
