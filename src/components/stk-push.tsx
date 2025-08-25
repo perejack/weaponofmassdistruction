@@ -185,8 +185,8 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
   const verifyTransactionCode = async () => {
     if (!validateTransactionCode(transactionCode)) {
       toast({
-        title: "Invalid Transaction Code",
-        description: "Transaction code must start with 'T' and be at least 7 characters long",
+        title: "Wrong Code",
+        description: "Wrong code, try again",
         variant: "destructive"
       })
       return
@@ -200,6 +200,16 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
         title: "Transaction Verified!",
         description: "Redirecting to your boost dashboard...",
       })
+      
+      // Clear timers and reset state before calling onSuccess
+      if (codeTimer) {
+        clearTimeout(codeTimer)
+        setCodeTimer(null)
+      }
+      if (pollInterval) {
+        clearInterval(pollInterval)
+        setPollInterval(null)
+      }
       
       setTimeout(() => {
         onSuccess(paymentReference || transactionCode)
@@ -311,7 +321,7 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
                 </label>
                 <Input
                   type="text"
-                  placeholder="e.g., TGH7K9MN2X"
+                  placeholder="e.g., JTNKLGBVXXEK"
                   value={transactionCode}
                   onChange={(e) => setTransactionCode(e.target.value.toUpperCase())}
                   className="h-12 text-center text-lg font-mono tracking-wider"
@@ -319,7 +329,7 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
                 />
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">
-                    Must start with 'T' and be 7+ characters
+                    Must be 7+ characters
                   </span>
                   <span className={`font-medium ${
                     validateTransactionCode(transactionCode) 
@@ -334,7 +344,7 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
               <div className="bg-blue-500/10 rounded-lg p-3 border border-blue-500/20">
                 <p className="text-xs text-blue-600 font-medium mb-1">💡 Where to find your code:</p>
                 <p className="text-xs text-muted-foreground">
-                  Check your SMS from M-Pesa for a code starting with 'T' (e.g., TGH7K9MN2X)
+                  Check your SMS from M-Pesa for your transaction confirmation code
                 </p>
               </div>
 
