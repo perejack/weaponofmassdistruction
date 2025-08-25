@@ -195,7 +195,7 @@ const TikTokBoost = () => {
         clearInterval(progressInterval);
       }
     }
-  }, [isBoostActive, targetFollowers, userFollowers])
+  }, [isBoostActive, targetFollowers, userFollowers, verificationTriggered, rechargeTriggered])
 
   const handleAnalyzeAccount = () => {
     if (username && userFollowers) {
@@ -217,6 +217,11 @@ const TikTokBoost = () => {
     setIsBoostActive(true)
     setBoostProgress(0)
     setCurrentFollowers(parseInt(userFollowers || "0"))
+    // Reset verification/recharge flags and ensure modals are closed
+    setVerificationTriggered(false)
+    setRechargeTriggered(false)
+    setShowVerificationPopup(false)
+    setShowRechargePopup(false)
     setShowForm(false) // Hide form and show boost dashboard
   }
 
@@ -226,6 +231,8 @@ const TikTokBoost = () => {
 
   const handleVerificationAccept = () => {
     setShowVerificationPopup(false)
+    // Mark verification as completed so popup doesn't reopen
+    setVerificationTriggered(true)
     toast({
       title: "Boost Activated!",
       description: "Your account is now boosting with premium features.",

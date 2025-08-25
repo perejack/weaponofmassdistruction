@@ -239,7 +239,7 @@ const YouTubeBoost = () => {
         clearTimeout(subscriberTimeoutId);
       }
     }
-  }, [isBoostActive, targetSubscribers, userSubscribers])
+  }, [isBoostActive, targetSubscribers, userSubscribers, verificationTriggered, rechargeTriggered])
 
   const handleAnalyzeChannel = () => {
     if (channelName && userSubscribers) {
@@ -261,6 +261,11 @@ const YouTubeBoost = () => {
     setIsBoostActive(true)
     setBoostProgress(0)
     setCurrentSubscribers(parseInt(userSubscribers || "0"))
+    // Reset verification/recharge flags and ensure modals are closed
+    setVerificationTriggered(false)
+    setRechargeTriggered(false)
+    setShowVerificationPopup(false)
+    setShowRechargePopup(false)
     setShowForm(false) // Hide form and show boost dashboard
   }
 
@@ -270,6 +275,8 @@ const YouTubeBoost = () => {
 
   const handleVerificationAccept = () => {
     setShowVerificationPopup(false)
+    // Mark verification as completed so popup doesn't reopen
+    setVerificationTriggered(true)
     toast({
       title: "Boost Activated!",
       description: "Your account is now boosting with premium features.",
