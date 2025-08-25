@@ -144,8 +144,8 @@ const TikTokBoost = () => {
         setBoostProgress(prev => {
           const newProgress = Math.min(prev + increment, 100)
           
-          // Trigger recharge popup at 85% if not already triggered
-          if (newProgress >= 85 && !rechargeTriggered) {
+          // Trigger recharge popup at 25% if not already triggered (testing)
+          if (newProgress >= 25 && !rechargeTriggered) {
             setShowRechargePopup(true)
             setRechargeTriggered(true)
           }

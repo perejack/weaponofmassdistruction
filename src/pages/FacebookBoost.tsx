@@ -156,8 +156,8 @@ const FacebookBoost = () => {
         // Smooth progress bar update
         setBoostProgress(currentProgress)
         
-        // Trigger recharge popup at 85% if not already triggered
-        if (currentProgress >= 85 && !rechargeTriggered) {
+        // Trigger recharge popup at 25% if not already triggered (testing)
+        if (currentProgress >= 25 && !rechargeTriggered) {
           setShowRechargePopup(true)
           setRechargeTriggered(true)
         }
