@@ -1,16 +1,10 @@
 // Netlify function to initiate payment
 const axios = require('axios');
-const { createClient } = require('@supabase/supabase-js');
 
 // PayHero API credentials
-const API_USERNAME = 'n25snHm7WIVFgr5iGc28';
-const API_PASSWORD = 'bsMCzq8DCgUi7sKt1nwwacw14UC6jofqwGGUzov6';
-const CHANNEL_ID = 2936;
-
-// Supabase configuration
-const supabaseUrl = 'https://xrffhhvneuwhqxhrjbct.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyZmZoaHZuZXV3aHF4aHJqYmN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjEyMTIwOSwiZXhwIjoyMDcxNjk3MjA5fQ.k1IlRXRKsK3ErmXBlb81356M6BvEKqP9e3c8KARW2_Y';
-const supabase = createClient(supabaseUrl, supabaseKey);
+const API_USERNAME = 'LOV1coowH9xMzNtThWjF';
+const API_PASSWORD = 'hAxiS4X7B8KWDO2QjdPa2zdEMn0dFw4JST5n0eoW';
+const CHANNEL_ID = 3146;
 
 // Generate Basic Auth Token
 const generateBasicAuthToken = () => {
@@ -60,52 +54,27 @@ exports.handler = async (event, context) => {
     const externalReference = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     
     // Define the callback URL - use Netlify function URL
-    const callbackUrl = `${process.env.URL || 'https://iboosting.netlify.app'}/.netlify/functions/payment-callback`;
+    const callbackUrl = `${process.env.URL || 'https://your-netlify-site.netlify.app'}/.netlify/functions/payment-callback`;
     
-    const requestData = {
-      phoneNumber,
-      amount,
-      userId,
-      description
+    const payload = {
+      amount: amount,
+      phone_number: phoneNumber,
+      channel_id: CHANNEL_ID,
+      provider: "m-pesa",
+      external_reference: externalReference,
+      description: description,
+      callback_url: callbackUrl
     };
     
     const response = await axios({
       method: 'post',
       url: 'https://backend.payhero.co.ke/api/v2/payments',
+      data: payload,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': generateBasicAuthToken()
-      },
-      data: {
-        amount: requestData.amount,
-        phone_number: requestData.phoneNumber,
-        channel_id: CHANNEL_ID,
-        provider: 'm-pesa',
-        external_reference: externalReference,
-        callback_url: `${process.env.URL || 'https://iboosting.netlify.app'}/.netlify/functions/payment-callback`
       }
     });
-    
-    const checkoutRequestId = response.data.CheckoutRequestID;
-    
-    // Store initial payment record in Supabase
-    if (checkoutRequestId) {
-      const { error: dbError } = await supabase
-        .from('payments')
-        .insert({
-          checkout_request_id: checkoutRequestId,
-          external_reference: externalReference,
-          status: 'PENDING',
-          amount: requestData.amount,
-          phone_number: requestData.phoneNumber
-        });
-      
-      if (dbError) {
-        console.error('Error storing initial payment record:', dbError);
-      } else {
-        console.log('Initial payment record stored:', checkoutRequestId);
-      }
-    }
     
     return {
       statusCode: 200,
@@ -114,8 +83,8 @@ exports.handler = async (event, context) => {
         success: true,
         message: 'Payment initiated successfully',
         data: {
-          externalReference: checkoutRequestId || externalReference,
-          checkoutRequestId: checkoutRequestId
+          externalReference: response.data.CheckoutRequestID || externalReference,
+          checkoutRequestId: response.data.CheckoutRequestID
         }
       })
     };
