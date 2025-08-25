@@ -226,11 +226,6 @@ const TikTokBoost = () => {
 
   const handleVerificationAccept = () => {
     setShowVerificationPopup(false)
-    setShowForm(false) // Hide form and show boost dashboard
-    setIsBoostActive(true) // Start the boost
-    setBoostProgress(0)
-    setCurrentFollowers(parseInt(userFollowers || "0"))
-    setVerificationTriggered(true)
     toast({
       title: "Boost Activated!",
       description: "Your account is now boosting with premium features.",
