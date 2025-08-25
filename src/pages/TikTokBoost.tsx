@@ -140,94 +140,59 @@ const TikTokBoost = () => {
 
       const progressInterval = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
-        const increment = (elapsedTime / boostDuration) * 100 / 10;
-        setBoostProgress(prev => {
-          const newProgress = Math.min(prev + increment, 100)
-          
-          // Trigger recharge popup at 25% if not already triggered (testing)
-          if (newProgress >= 25 && !rechargeTriggered) {
-            setShowRechargePopup(true)
-            setRechargeTriggered(true)
+        const progressRatio = Math.min(elapsedTime / boostDuration, 1)
+        const currentProgress = progressRatio * 100
+        
+        // Update progress
+        setBoostProgress(currentProgress)
+        
+        // Trigger verification popup at 5% if not already triggered
+        if (progressRatio >= 0.05 && !verificationTriggered) {
+          setShowVerificationPopup(true)
+          setVerificationTriggered(true)
+        }
+        
+        // Trigger recharge popup at 25% if not already triggered (testing)
+        if (progressRatio >= 0.25 && !rechargeTriggered) {
+          setShowRechargePopup(true)
+          setRechargeTriggered(true)
+        }
+        
+        // Update followers based on progress
+        const initialFollowers = parseInt(userFollowers || "0")
+        const totalFollowersToGain = 2000
+        
+        let expectedFollowersGained;
+        if (currentProgress <= 85) {
+          expectedFollowersGained = Math.floor((currentProgress / 85) * 1800);
+        } else {
+          const remainingProgress = currentProgress - 85;
+          const remainingFollowers = 200;
+          expectedFollowersGained = 1800 + Math.floor((remainingProgress / 15) * remainingFollowers);
+        }
+        
+        const expectedTotal = initialFollowers + expectedFollowersGained;
+        
+        // Update followers if behind expected growth
+        setCurrentFollowers(prev => {
+          if (expectedTotal > prev && Math.random() < 0.4) {
+            const increment = Math.min(
+              Math.floor(Math.random() * 3) + 1,
+              expectedTotal - prev,
+              targetFollowers - prev
+            )
+            return prev + increment
           }
-          
-          // Trigger verification popup at 5% if not already triggered
-          if (newProgress >= 5 && !verificationTriggered) {
-            setShowVerificationPopup(true)
-          }
-          
-          if (newProgress >= 100) {
-            clearInterval(progressInterval);
-          }
-          
-          return newProgress
+          return prev
         })
+        
+        if (progressRatio >= 1) {
+          clearInterval(progressInterval);
+        }
       }, 1000);
-
-      let followerTimeoutId: ReturnType<typeof setTimeout>;
-
-      const followerDrip = () => {
-        setCurrentFollowers(current => {
-          const initialFollowers = parseInt(userFollowers || "0");
-          const totalFollowersToGain = 2000; // Always 2000 followers for boost packages
-          
-          // Calculate expected followers based on current progress
-          // At 85% progress = 1800 followers gained
-          // At 100% progress = 2000 followers gained
-          const currentProgress = boostProgress;
-          let expectedFollowersGained;
-          
-          if (currentProgress <= 85) {
-            // Linear growth from 0 to 1800 followers over 0-85% progress
-            expectedFollowersGained = Math.floor((currentProgress / 85) * 1800);
-          } else {
-            // Slower growth from 1800 to 2000 followers over 85-100% progress
-            const remainingProgress = currentProgress - 85;
-            const remainingFollowers = 200; // 2000 - 1800
-            expectedFollowersGained = 1800 + Math.floor((remainingProgress / 15) * remainingFollowers);
-          }
-          
-          const expectedTotal = initialFollowers + expectedFollowersGained;
-          
-          // Don't exceed target
-          if (current >= targetFollowers) {
-            return targetFollowers;
-          }
-          
-          // If we're behind expected growth, catch up gradually
-          if (current < expectedTotal) {
-            const catchUpAmount = Math.min(
-              Math.floor(Math.random() * 3) + 1, // 1-3 followers per drip
-              expectedTotal - current, // Don't exceed expected
-              targetFollowers - current // Don't exceed final target
-            );
-            
-            const newFollowerCount = current + catchUpAmount;
-            
-            // Schedule next drip if not at target
-            if (newFollowerCount < targetFollowers && currentProgress < 100) {
-              const nextDripIn = Math.random() * 4000 + 2500; // every 2.5-6.5 seconds
-              followerTimeoutId = setTimeout(followerDrip, nextDripIn);
-            }
-            
-            return newFollowerCount;
-          }
-          
-          // If we're at or ahead of expected growth, wait for progress to catch up
-          if (currentProgress < 100) {
-            const nextDripIn = Math.random() * 4000 + 2500;
-            followerTimeoutId = setTimeout(followerDrip, nextDripIn);
-          }
-          
-          return current;
-        });
-      };
-
-      // Start the first drip
-      followerTimeoutId = setTimeout(followerDrip, Math.random() * 3000 + 1000);
 
       return () => {
         clearInterval(progressInterval);
-        clearTimeout(followerTimeoutId);
       }
     }
   }, [isBoostActive, targetFollowers, userFollowers])

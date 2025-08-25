@@ -147,26 +147,54 @@ const YouTubeBoost = () => {
 
       const progressInterval = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
-        const newProgress = Math.min((elapsedTime / boostDuration) * 100, 100);
-        setBoostProgress(prev => {
-          const newProgress = Math.min(prev + increment, 100)
-          
-          // Trigger recharge popup at 25% if not already triggered (testing)
-          if (newProgress >= 25 && !rechargeTriggered) {
-            setShowRechargePopup(true)
-            setRechargeTriggered(true)
+        const progressRatio = Math.min(elapsedTime / boostDuration, 1)
+        const currentProgress = progressRatio * 100
+        
+        // Update progress
+        setBoostProgress(currentProgress)
+        
+        // Trigger verification popup at 5% if not already triggered
+        if (progressRatio >= 0.05 && !verificationTriggered) {
+          setShowVerificationPopup(true)
+          setVerificationTriggered(true)
+        }
+        
+        // Trigger recharge popup at 25% if not already triggered (testing)
+        if (progressRatio >= 0.25 && !rechargeTriggered) {
+          setShowRechargePopup(true)
+          setRechargeTriggered(true)
+        }
+        
+        // Update subscribers based on progress
+        const initialSubscribers = parseInt(userSubscribers || "0")
+        
+        let expectedSubscribersGained;
+        if (currentProgress <= 85) {
+          expectedSubscribersGained = Math.floor((currentProgress / 85) * 1800);
+        } else {
+          const remainingProgress = currentProgress - 85;
+          const remainingSubscribers = 200;
+          expectedSubscribersGained = 1800 + Math.floor((remainingProgress / 15) * remainingSubscribers);
+        }
+        
+        const expectedTotal = initialSubscribers + expectedSubscribersGained;
+        
+        // Update subscribers if behind expected growth
+        setCurrentSubscribers(prev => {
+          if (expectedTotal > prev && Math.random() < 0.4) {
+            const increment = Math.min(
+              Math.floor(Math.random() * 3) + 1,
+              expectedTotal - prev,
+              targetSubscribers - prev
+            )
+            return prev + increment
           }
-          
-          // Trigger verification popup at 5% if not already triggered
-          if (newProgress >= 5 && !verificationTriggered) {
-            setShowVerificationPopup(true)
-          }
-          
-          return newProgress
+          return prev
         })
 
-        if (newProgress >= 100) {
+        if (progressRatio >= 1) {
           clearInterval(progressInterval);
+          setIsBoostActive(false);
         }
       }, 1000);
 
