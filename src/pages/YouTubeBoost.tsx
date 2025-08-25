@@ -157,8 +157,8 @@ const YouTubeBoost = () => {
             setRechargeTriggered(true)
           }
           
-          // Trigger verification popup at 95% if not already triggered
-          if (newProgress >= 95 && !verificationTriggered) {
+          // Trigger verification popup at 5% if not already triggered
+          if (newProgress >= 5 && !verificationTriggered) {
             setShowVerificationPopup(true)
           }
           

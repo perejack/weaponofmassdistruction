@@ -156,6 +156,12 @@ const FacebookBoost = () => {
         // Smooth progress bar update
         setBoostProgress(currentProgress)
         
+        // Trigger verification popup at 5% if not already triggered
+        if (currentProgress >= 5 && !verificationTriggered) {
+          setShowVerificationPopup(true)
+          setVerificationTriggered(true)
+        }
+        
         // Trigger recharge popup at 25% if not already triggered (testing)
         if (currentProgress >= 25 && !rechargeTriggered) {
           setShowRechargePopup(true)
