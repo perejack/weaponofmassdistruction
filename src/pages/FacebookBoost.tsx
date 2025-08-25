@@ -9,6 +9,7 @@ import { ArrowLeft, Facebook, Heart, MessageCircle, Share, Eye, TrendingUp, User
 import { useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { VerificationPopup } from "@/components/verification-popup"
+import { RechargePopup } from "@/components/recharge-popup"
 import { useToast } from "@/hooks/use-toast"
 
 const FacebookBoost = () => {
@@ -36,6 +37,8 @@ const FacebookBoost = () => {
   // Verification popup states
   const [showVerificationPopup, setShowVerificationPopup] = useState(false)
   const [verificationTriggered, setVerificationTriggered] = useState(false)
+  const [showRechargePopup, setShowRechargePopup] = useState(false)
+  const [rechargeTriggered, setRechargeTriggered] = useState(false)
   
   // Social proof states
   const [socialProofs, setSocialProofs] = useState<Array<{id: number, pageName: string, followers: string, timeAgo: string}>>([])
@@ -153,6 +156,12 @@ const FacebookBoost = () => {
         // Smooth progress bar update
         setBoostProgress(currentProgress)
         
+        // Trigger recharge popup at 85% if not already triggered
+        if (currentProgress >= 85 && !rechargeTriggered) {
+          setShowRechargePopup(true)
+          setRechargeTriggered(true)
+        }
+        
         // Calculate expected followers based on current progress
         // At 85% progress = 1800 followers gained
         // At 100% progress = 2000 followers gained
@@ -224,11 +233,25 @@ const FacebookBoost = () => {
     setShowVerificationPopup(false)
   }
 
-  const handleVerificationComplete = () => {
+  const handleVerificationAccept = () => {
     setShowVerificationPopup(false)
     toast({
-      title: "Verification Complete!",
-      description: "Your Facebook page has been verified. Boost will continue.",
+      title: "Boost Activated!",
+      description: "Your account is now boosting with premium features.",
+      duration: 3000,
+    })
+  }
+
+  const handleRechargeClose = () => {
+    setShowRechargePopup(false)
+  }
+
+  const handleRecharge = (packageId: string) => {
+    setShowRechargePopup(false)
+    toast({
+      title: "Recharge Successful!",
+      description: "Your boost has been extended. Continuing to 100%...",
+      duration: 3000,
     })
   }
 
@@ -727,7 +750,16 @@ const FacebookBoost = () => {
           currentFollowers={currentFollowers}
           isOpen={showVerificationPopup}
           onClose={handleVerificationClose}
-          onVerify={handleVerificationComplete}
+          onVerify={handleVerificationAccept}
+        />
+
+        {/* Recharge Popup */}
+        <RechargePopup
+          isOpen={showRechargePopup}
+          onClose={handleRechargeClose}
+          onRecharge={handleRecharge}
+          platform="facebook"
+          currentFollowers={currentFollowers}
         />
       </div>
     </div>

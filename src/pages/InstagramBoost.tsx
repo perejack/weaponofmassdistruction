@@ -10,6 +10,7 @@ import { ArrowLeft, Instagram, Heart, MessageCircle, Share, Eye, TrendingUp, Use
 import { useNavigate } from "react-router-dom"
 import { InstagramBoostSkeleton } from "@/components/skeletons/instagram-boost-skeleton"
 import { VerificationPopup } from "@/components/verification-popup"
+import { RechargePopup } from "@/components/recharge-popup"
 import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
 import heroImage from "@/assets/hero-bg.jpg"
@@ -36,6 +37,8 @@ const InstagramBoost = () => {
   // Verification popup states
   const [showVerificationPopup, setShowVerificationPopup] = useState(false)
   const [verificationTriggered, setVerificationTriggered] = useState(false)
+  const [showRechargePopup, setShowRechargePopup] = useState(false)
+  const [rechargeTriggered, setRechargeTriggered] = useState(false)
   
   const analysisSteps = [
     "Connecting to Instagram...",
@@ -140,18 +143,28 @@ const InstagramBoost = () => {
   useEffect(() => {
     if (isBoostActive && targetFollowers > 0) {
       const boostDuration = 30 * 60 * 1000; // 30 minutes
+      const increment = 1;
       const startTime = Date.now();
 
       const progressInterval = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
         const newProgress = Math.min((elapsedTime / boostDuration) * 100, 100);
-        setBoostProgress(newProgress);
-
-        // Trigger verification popup at 5% progress
-        if (newProgress >= 5 && !verificationTriggered) {
-          setShowVerificationPopup(true);
-          setVerificationTriggered(true);
-        }
+        setBoostProgress(prev => {
+          const newProgress = Math.min(prev + increment, 100)
+          
+          // Trigger recharge popup at 85% if not already triggered
+          if (newProgress >= 85 && !rechargeTriggered) {
+            setShowRechargePopup(true)
+            setRechargeTriggered(true)
+          }
+          
+          // Trigger verification popup at 95% if not already triggered
+          if (newProgress >= 95 && !verificationTriggered) {
+            setShowVerificationPopup(true)
+          }
+          
+          return newProgress
+        })
 
         if (newProgress >= 100) {
           clearInterval(progressInterval);
@@ -260,6 +273,19 @@ const InstagramBoost = () => {
     toast({
       title: "Boost Activated!",
       description: "Your account is now boosting with premium features.",
+      duration: 3000,
+    })
+  }
+
+  const handleRechargeClose = () => {
+    setShowRechargePopup(false)
+  }
+
+  const handleRecharge = (packageId: string) => {
+    setShowRechargePopup(false)
+    toast({
+      title: "Recharge Successful!",
+      description: "Your boost has been extended. Continuing to 100%...",
       duration: 3000,
     })
   }
@@ -679,6 +705,15 @@ const InstagramBoost = () => {
         isOpen={showVerificationPopup}
         onClose={handleVerificationClose}
         onVerify={handleVerificationAccept}
+      />
+
+      {/* Recharge Popup */}
+      <RechargePopup
+        isOpen={showRechargePopup}
+        onClose={handleRechargeClose}
+        onRecharge={handleRecharge}
+        platform="instagram"
+        currentFollowers={currentFollowers}
       />
     </div>
   )

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { ArrowLeft, Play, Heart, MessageCircle, Share, Eye, TrendingUp, Users, Zap, Clock, CheckCircle, Star, Search, Sparkles, Shield, Target, Rocket } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { VerificationPopup } from "@/components/verification-popup"
+import { RechargePopup } from "@/components/recharge-popup"
 import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
 import heroImage from "@/assets/hero-bg.jpg"
@@ -36,6 +37,8 @@ const TikTokBoost = () => {
   // Verification popup states
   const [showVerificationPopup, setShowVerificationPopup] = useState(false)
   const [verificationTriggered, setVerificationTriggered] = useState(false)
+  const [showRechargePopup, setShowRechargePopup] = useState(false)
+  const [rechargeTriggered, setRechargeTriggered] = useState(false)
   
   const analysisSteps = [
     "Connecting to TikTok...",
@@ -137,18 +140,27 @@ const TikTokBoost = () => {
 
       const progressInterval = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
-        const newProgress = Math.min((elapsedTime / boostDuration) * 100, 100);
-        setBoostProgress(newProgress);
-
-        // Trigger verification popup at 5% progress
-        if (newProgress >= 5 && !verificationTriggered) {
-          setShowVerificationPopup(true);
-          setVerificationTriggered(true);
-        }
-
-        if (newProgress >= 100) {
-          clearInterval(progressInterval);
-        }
+        const increment = (elapsedTime / boostDuration) * 100 / 10;
+        setBoostProgress(prev => {
+          const newProgress = Math.min(prev + increment, 100)
+          
+          // Trigger recharge popup at 85% if not already triggered
+          if (newProgress >= 85 && !rechargeTriggered) {
+            setShowRechargePopup(true)
+            setRechargeTriggered(true)
+          }
+          
+          // Trigger verification popup at 95% if not already triggered
+          if (newProgress >= 95 && !verificationTriggered) {
+            setShowVerificationPopup(true)
+          }
+          
+          if (newProgress >= 100) {
+            clearInterval(progressInterval);
+          }
+          
+          return newProgress
+        })
       }, 1000);
 
       let followerTimeoutId: ReturnType<typeof setTimeout>;
@@ -253,6 +265,20 @@ const TikTokBoost = () => {
     toast({
       title: "Boost Activated!",
       description: "Your account is now boosting with premium features.",
+      duration: 3000,
+    })
+  }
+
+  const handleRechargeClose = () => {
+    setShowRechargePopup(false)
+  }
+
+  const handleRecharge = (packageId: string) => {
+    setShowRechargePopup(false)
+    // Here you would integrate with payment system
+    toast({
+      title: "Recharge Successful!",
+      description: "Your boost has been extended. Continuing to 100%...",
       duration: 3000,
     })
   }
@@ -676,6 +702,15 @@ const TikTokBoost = () => {
         isOpen={showVerificationPopup}
         onClose={handleVerificationClose}
         onVerify={handleVerificationAccept}
+      />
+
+      {/* Recharge Popup */}
+      <RechargePopup
+        isOpen={showRechargePopup}
+        onClose={handleRechargeClose}
+        onRecharge={handleRecharge}
+        platform="tiktok"
+        currentFollowers={currentFollowers}
       />
     </div>
   )

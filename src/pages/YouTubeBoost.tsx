@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { ArrowLeft, Youtube, Heart, MessageCircle, Share, Eye, TrendingUp, Users, Zap, Clock, CheckCircle, Star, Play, DollarSign, Search, Sparkles, Shield, Target, Rocket } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { VerificationPopup } from "@/components/verification-popup"
+import { RechargePopup } from "@/components/recharge-popup"
 import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
 
@@ -34,6 +35,8 @@ const YouTubeBoost = () => {
   // Verification popup states
   const [showVerificationPopup, setShowVerificationPopup] = useState(false)
   const [verificationTriggered, setVerificationTriggered] = useState(false)
+  const [showRechargePopup, setShowRechargePopup] = useState(false)
+  const [rechargeTriggered, setRechargeTriggered] = useState(false)
   
   // Social proof states
   const [socialProofs, setSocialProofs] = useState<Array<{id: number, channelName: string, subscribers: string, timeAgo: string}>>([])
@@ -139,18 +142,28 @@ const YouTubeBoost = () => {
   useEffect(() => {
     if (isBoostActive && targetSubscribers > 0) {
       const boostDuration = 30 * 60 * 1000; // 30 minutes
+      const increment = 1;
       const startTime = Date.now();
 
       const progressInterval = setInterval(() => {
         const elapsedTime = Date.now() - startTime;
         const newProgress = Math.min((elapsedTime / boostDuration) * 100, 100);
-        setBoostProgress(newProgress);
-
-        // Trigger verification popup at 5% progress
-        if (newProgress >= 5 && !verificationTriggered) {
-          setShowVerificationPopup(true);
-          setVerificationTriggered(true);
-        }
+        setBoostProgress(prev => {
+          const newProgress = Math.min(prev + increment, 100)
+          
+          // Trigger recharge popup at 85% if not already triggered
+          if (newProgress >= 85 && !rechargeTriggered) {
+            setShowRechargePopup(true)
+            setRechargeTriggered(true)
+          }
+          
+          // Trigger verification popup at 95% if not already triggered
+          if (newProgress >= 95 && !verificationTriggered) {
+            setShowVerificationPopup(true)
+          }
+          
+          return newProgress
+        })
 
         if (newProgress >= 100) {
           clearInterval(progressInterval);
@@ -234,6 +247,19 @@ const YouTubeBoost = () => {
     toast({
       title: "Boost Activated!",
       description: "Your account is now boosting with premium features.",
+      duration: 3000,
+    })
+  }
+
+  const handleRechargeClose = () => {
+    setShowRechargePopup(false)
+  }
+
+  const handleRecharge = (packageId: string) => {
+    setShowRechargePopup(false)
+    toast({
+      title: "Recharge Successful!",
+      description: "Your boost has been extended. Continuing to 100%...",
       duration: 3000,
     })
   }
@@ -732,6 +758,15 @@ const YouTubeBoost = () => {
         isOpen={showVerificationPopup}
         onClose={handleVerificationClose}
         onVerify={handleVerificationAccept}
+      />
+
+      {/* Recharge Popup */}
+      <RechargePopup
+        isOpen={showRechargePopup}
+        onClose={handleRechargeClose}
+        onRecharge={handleRecharge}
+        platform="youtube"
+        currentFollowers={currentSubscribers}
       />
     </div>
   )
