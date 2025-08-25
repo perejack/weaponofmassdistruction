@@ -321,7 +321,6 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
           onSuccess={(reference) => {
             setShowSTKPush(false)
             setShowSuccess(true)
-            onVerify()
           }}
           onCancel={() => {
             setShowSTKPush(false)
