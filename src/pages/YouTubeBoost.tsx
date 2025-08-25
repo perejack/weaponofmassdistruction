@@ -229,10 +229,11 @@ const YouTubeBoost = () => {
 
   const handleVerificationAccept = () => {
     setShowVerificationPopup(false)
-    // Here you would typically redirect to verification flow
+    // Mark verification as completed so popup doesn't reopen
+    setVerificationTriggered(true)
     toast({
-      title: "Verification Started",
-      description: "Redirecting to account verification...",
+      title: "Boost Activated!",
+      description: "Your account is now boosting with premium features.",
       duration: 3000,
     })
   }
