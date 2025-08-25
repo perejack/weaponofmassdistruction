@@ -128,9 +128,17 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
       try {
         const response = await fetch(`${API_URL}/payment-status/${reference}`)
         const data = await response.json()
+        
+        // Log full response for debugging
+        console.log('Full payment status response:', data);
 
         if (data.success && data.payment) {
-          if (data.payment.status === 'SUCCESS') {
+          // Log the payment data for debugging
+          console.log('Payment status response:', data.payment);
+          
+          // Check for various success status formats
+          const status = data.payment.status?.toUpperCase();
+          if (status === 'SUCCESS' || status === 'COMPLETE' || status === 'COMPLETED' || status === '0' || data.payment.mpesaReceiptNumber) {
             clearInterval(interval)
             setStatus('success')
             setIsProcessing(false)

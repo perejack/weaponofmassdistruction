@@ -51,12 +51,15 @@ exports.handler = async (event, context) => {
     
     const response = await axios({
       method: 'get',
-      url: `https://backend.payhero.co.ke/api/v2/payments/${reference}`,
+      url: `https://backend.payhero.co.ke/api/v2/payments/status/${reference}`,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': generateBasicAuthToken()
       }
     });
+    
+    // Log the actual response for debugging
+    console.log('PayHero API Response:', JSON.stringify(response.data, null, 2));
     
     return {
       statusCode: 200,
@@ -64,11 +67,12 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({
         success: true,
         payment: {
-          status: response.data.status || 'PENDING',
-          amount: response.data.amount,
-          phoneNumber: response.data.phone_number,
-          mpesaReceiptNumber: response.data.mpesa_receipt_number,
-          resultDesc: response.data.result_desc
+          status: response.data.status || response.data.Status || 'PENDING',
+          amount: response.data.amount || response.data.Amount,
+          phoneNumber: response.data.phone_number || response.data.PhoneNumber,
+          mpesaReceiptNumber: response.data.mpesa_receipt_number || response.data.MpesaReceiptNumber,
+          resultDesc: response.data.result_desc || response.data.ResultDesc,
+          rawData: response.data // Include raw data for debugging
         }
       })
     };
