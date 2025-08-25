@@ -16,42 +16,51 @@ exports.handler = async (event, context) => {
   }
   
   try {
-    // Parse the callback data
+    // --- DETAILED LOGGING START ---
+    console.log('[CALLBACK_RECEIVED] Raw event body:', event.body);
+
     const callbackData = JSON.parse(event.body);
-    
-    // Log the callback for debugging
-    console.log('Payment callback received:', JSON.stringify(callbackData, null, 2));
-    
-    // Extract payment info from PayHero callback
+    console.log('[CALLBACK_PARSED] Parsed callback data:', JSON.stringify(callbackData, null, 2));
+
     const response = callbackData.response || {};
     const checkoutRequestId = response.CheckoutRequestID;
-    const externalReference = response.ExternalReference;
-    
-    if (checkoutRequestId) {
-      // Store payment status in Supabase
-      const paymentData = {
-        checkout_request_id: checkoutRequestId,
-        external_reference: externalReference,
-        status: response.Status === 'Success' ? 'SUCCESS' : 'FAILED',
-        amount: response.Amount,
-        phone_number: response.Phone,
-        mpesa_receipt_number: response.MpesaReceiptNumber,
-        result_desc: response.ResultDesc,
-        result_code: response.ResultCode
+    console.log(`[CALLBACK_DATA] CheckoutRequestID: ${checkoutRequestId}`);
+
+    if (!checkoutRequestId) {
+      console.error('[CALLBACK_ERROR] No CheckoutRequestID found in the callback data.');
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ status: 'error', message: 'Invalid callback data: Missing CheckoutRequestID' })
       };
-      
-      // Insert or update payment in Supabase
-      const { data, error } = await supabase
-        .from('payments')
-        .upsert(paymentData, { onConflict: 'checkout_request_id' });
-      
-      if (error) {
-        console.error('Error storing payment:', error);
-      } else {
-        console.log(`Payment status stored in Supabase for ${checkoutRequestId}:`, paymentData);
-      }
     }
-    
+
+    const paymentStatus = response.Status === 'Success' ? 'SUCCESS' : 'FAILED';
+    console.log(`[CALLBACK_STATUS] Determined payment status: ${paymentStatus}`);
+
+    const paymentData = {
+      checkout_request_id: checkoutRequestId,
+      external_reference: response.ExternalReference,
+      status: paymentStatus,
+      amount: response.Amount,
+      phone_number: response.Phone,
+      mpesa_receipt_number: response.MpesaReceiptNumber,
+      result_desc: response.ResultDesc,
+      result_code: response.ResultCode
+    };
+
+    console.log('[SUPABASE_UPSERT] Attempting to upsert payment data:', JSON.stringify(paymentData, null, 2));
+
+    const { data, error } = await supabase
+      .from('payments')
+      .upsert(paymentData, { onConflict: 'checkout_request_id' });
+
+    if (error) {
+      console.error('[SUPABASE_ERROR] Error storing payment status:', JSON.stringify(error, null, 2));
+    } else {
+      console.log('[SUPABASE_SUCCESS] Payment status stored successfully for CheckoutRequestID:', checkoutRequestId);
+    }
+    // --- DETAILED LOGGING END ---
+
     // Acknowledge receipt of callback
     return {
       statusCode: 200,
