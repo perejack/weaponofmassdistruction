@@ -87,16 +87,16 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
 
       const data = await response.json()
 
-      if (data.success && data.data.externalReference) {
-        setPaymentReference(data.data.externalReference)
+      if (data.success && data.data.checkoutRequestId) {
+        setPaymentReference(data.data.checkoutRequestId)
         
         toast({
           title: "STK Push Sent",
           description: "Please complete the payment on your phone",
         })
         
-        // Start polling for payment status
-        startPolling(data.data.externalReference)
+        // Start polling for payment status using CheckoutRequestID
+        startPolling(data.data.checkoutRequestId)
       } else {
         setStatus('failed')
         setIsProcessing(false)

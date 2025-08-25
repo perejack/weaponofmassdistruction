@@ -1,5 +1,9 @@
-// Import the payment statuses from callback function
-const { paymentStatuses } = require('./payment-callback');
+const { createClient } = require('@supabase/supabase-js');
+
+// Supabase configuration
+const supabaseUrl = 'https://xrffhhvneuwhqxhrjbct.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyZmZoaHZuZXV3aHF4aHJqYmN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjEyMTIwOSwiZXhwIjoyMDcxNjk3MjA5fQ.k1IlRXRKsK3ErmXBlb81356M6BvEKqP9e3c8KARW2_Y';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -38,11 +42,20 @@ exports.handler = async (event, context) => {
       };
     }
     
-    // Check in-memory storage for payment status
-    const paymentData = paymentStatuses.get(reference);
+    // Query Supabase for payment status
+    const { data: payment, error } = await supabase
+      .from('payments')
+      .select('*')
+      .or(`checkout_request_id.eq.${reference},external_reference.eq.${reference}`)
+      .single();
     
-    if (paymentData) {
-      console.log(`Payment status found for ${reference}:`, paymentData);
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error querying payment:', error);
+      throw error;
+    }
+    
+    if (payment) {
+      console.log(`Payment status found for ${reference}:`, payment);
       
       return {
         statusCode: 200,
@@ -50,13 +63,13 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({
           success: true,
           payment: {
-            status: paymentData.status,
-            amount: paymentData.amount,
-            phoneNumber: paymentData.phoneNumber,
-            mpesaReceiptNumber: paymentData.mpesaReceiptNumber,
-            resultDesc: paymentData.resultDesc,
-            resultCode: paymentData.resultCode,
-            timestamp: paymentData.timestamp
+            status: payment.status,
+            amount: payment.amount,
+            phoneNumber: payment.phone_number,
+            mpesaReceiptNumber: payment.mpesa_receipt_number,
+            resultDesc: payment.result_desc,
+            resultCode: payment.result_code,
+            timestamp: payment.updated_at
           }
         })
       };

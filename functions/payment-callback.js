@@ -1,5 +1,9 @@
-// In-memory storage for payment status (use database in production)
-const paymentStatuses = new Map();
+const { createClient } = require('@supabase/supabase-js');
+
+// Supabase configuration
+const supabaseUrl = 'https://xrffhhvneuwhqxhrjbct.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhyZmZoaHZuZXV3aHF4aHJqYmN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjEyMTIwOSwiZXhwIjoyMDcxNjk3MjA5fQ.k1IlRXRKsK3ErmXBlb81356M6BvEKqP9e3c8KARW2_Y';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Netlify function to handle payment callback from PayHero
 exports.handler = async (event, context) => {
@@ -24,24 +28,28 @@ exports.handler = async (event, context) => {
     const externalReference = response.ExternalReference;
     
     if (checkoutRequestId) {
-      // Store payment status in memory
+      // Store payment status in Supabase
       const paymentData = {
+        checkout_request_id: checkoutRequestId,
+        external_reference: externalReference,
         status: response.Status === 'Success' ? 'SUCCESS' : 'FAILED',
         amount: response.Amount,
-        phoneNumber: response.Phone,
-        mpesaReceiptNumber: response.MpesaReceiptNumber,
-        resultDesc: response.ResultDesc,
-        resultCode: response.ResultCode,
-        timestamp: new Date().toISOString()
+        phone_number: response.Phone,
+        mpesa_receipt_number: response.MpesaReceiptNumber,
+        result_desc: response.ResultDesc,
+        result_code: response.ResultCode
       };
       
-      // Store by both CheckoutRequestID and ExternalReference
-      paymentStatuses.set(checkoutRequestId, paymentData);
-      if (externalReference) {
-        paymentStatuses.set(externalReference, paymentData);
-      }
+      // Insert or update payment in Supabase
+      const { data, error } = await supabase
+        .from('payments')
+        .upsert(paymentData, { onConflict: 'checkout_request_id' });
       
-      console.log(`Payment status stored for ${checkoutRequestId}:`, paymentData);
+      if (error) {
+        console.error('Error storing payment:', error);
+      } else {
+        console.log(`Payment status stored in Supabase for ${checkoutRequestId}:`, paymentData);
+      }
     }
     
     // Acknowledge receipt of callback
@@ -59,9 +67,3 @@ exports.handler = async (event, context) => {
   }
 };
 
-// Export the payment statuses for other functions to access
-exports.getPaymentStatus = (reference) => {
-  return paymentStatuses.get(reference);
-};
-
-exports.paymentStatuses = paymentStatuses;
