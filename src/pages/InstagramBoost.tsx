@@ -163,32 +163,57 @@ const InstagramBoost = () => {
       const followerDrip = () => {
         setCurrentFollowers(current => {
           const initialFollowers = parseInt(userFollowers || "0");
+          const totalFollowersToGain = 2000; // Always 2000 followers for boost packages
+          
+          // Calculate expected followers based on current progress
+          // At 85% progress = 1800 followers gained
+          // At 100% progress = 2000 followers gained
+          const currentProgress = boostProgress;
+          let expectedFollowersGained;
+          
+          if (currentProgress <= 85) {
+            // Linear growth from 0 to 1800 followers over 0-85% progress
+            expectedFollowersGained = Math.floor((currentProgress / 85) * 1800);
+          } else {
+            // Slower growth from 1800 to 2000 followers over 85-100% progress
+            const remainingProgress = currentProgress - 85;
+            const remainingFollowers = 200; // 2000 - 1800
+            expectedFollowersGained = 1800 + Math.floor((remainingProgress / 15) * remainingFollowers);
+          }
+          
+          const expectedTotal = initialFollowers + expectedFollowersGained;
+          
+          // Don't exceed target
           if (current >= targetFollowers) {
             return targetFollowers;
           }
-
-          const followersGainedSoFar = current - initialFollowers;
-          const totalFollowersToGain = targetFollowers - initialFollowers;
-          const remainingFollowers = totalFollowersToGain - followersGainedSoFar;
-
-          if (remainingFollowers <= 0) {
-            return targetFollowers;
+          
+          // If we're behind expected growth, catch up gradually
+          if (current < expectedTotal) {
+            const catchUpAmount = Math.min(
+              Math.floor(Math.random() * 3) + 1, // 1-3 followers per drip
+              expectedTotal - current, // Don't exceed expected
+              targetFollowers - current // Don't exceed final target
+            );
+            
+            const newFollowerCount = current + catchUpAmount;
+            
+            // Schedule next drip if not at target
+            if (newFollowerCount < targetFollowers && currentProgress < 100) {
+              const nextDripIn = Math.random() * 4000 + 2500; // every 2.5-6.5 seconds
+              followerTimeoutId = setTimeout(followerDrip, nextDripIn);
+            }
+            
+            return newFollowerCount;
           }
           
-          // Drip 1-3 followers
-          const followersToAdd = Math.min(Math.floor(Math.random() * 3) + 1, remainingFollowers);
-          const newFollowerCount = current + followersToAdd;
-
-          // Schedule the next drip only if we haven't reached the target
-          if (newFollowerCount < targetFollowers) {
-            const nextDripIn = Math.random() * 4000 + 2500; // every 2.5-6.5 seconds
+          // If we're at or ahead of expected growth, wait for progress to catch up
+          if (currentProgress < 100) {
+            const nextDripIn = Math.random() * 4000 + 2500;
             followerTimeoutId = setTimeout(followerDrip, nextDripIn);
-          } else {
-             // Ensure the final count is exact
-            return targetFollowers;
           }
-
-          return newFollowerCount;
+          
+          return current;
         });
       };
 

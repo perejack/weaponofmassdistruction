@@ -142,21 +142,42 @@ const FacebookBoost = () => {
     if (isBoostActive && targetFollowers > 0) {
       const startTime = Date.now()
       const duration = 30 * 60 * 1000 // 30 minutes in milliseconds
-      const totalFollowersToAdd = targetFollowers - parseInt(userFollowers || "0")
+      const initialFollowers = parseInt(userFollowers || "0")
+      const totalFollowersToGain = 2000 // Always 2000 followers for boost packages
       
       const interval = setInterval(() => {
         const elapsed = Date.now() - startTime
         const progressRatio = Math.min(elapsed / duration, 1)
+        const currentProgress = progressRatio * 100
         
         // Smooth progress bar update
-        setBoostProgress(progressRatio * 100)
+        setBoostProgress(currentProgress)
         
-        // Realistic follower drip: add 1-3 followers every 2.5-6.5 seconds
-        const expectedFollowers = parseInt(userFollowers || "0") + Math.floor(totalFollowersToAdd * progressRatio)
+        // Calculate expected followers based on current progress
+        // At 85% progress = 1800 followers gained
+        // At 100% progress = 2000 followers gained
+        let expectedFollowersGained;
         
-        if (expectedFollowers > currentFollowers && Math.random() < 0.3) {
-          const increment = Math.floor(Math.random() * 3) + 1 // 1-3 followers
-          setCurrentFollowers(prev => Math.min(prev + increment, expectedFollowers))
+        if (currentProgress <= 85) {
+          // Linear growth from 0 to 1800 followers over 0-85% progress
+          expectedFollowersGained = Math.floor((currentProgress / 85) * 1800);
+        } else {
+          // Slower growth from 1800 to 2000 followers over 85-100% progress
+          const remainingProgress = currentProgress - 85;
+          const remainingFollowers = 200; // 2000 - 1800
+          expectedFollowersGained = 1800 + Math.floor((remainingProgress / 15) * remainingFollowers);
+        }
+        
+        const expectedTotal = initialFollowers + expectedFollowersGained;
+        
+        // Realistic follower drip: add 1-3 followers when behind expected growth
+        if (expectedTotal > currentFollowers && Math.random() < 0.4) {
+          const increment = Math.min(
+            Math.floor(Math.random() * 3) + 1, // 1-3 followers
+            expectedTotal - currentFollowers, // Don't exceed expected
+            targetFollowers - currentFollowers // Don't exceed final target
+          )
+          setCurrentFollowers(prev => prev + increment)
         }
         
         // Trigger verification popup at 5% progress
