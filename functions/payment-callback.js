@@ -1,3 +1,6 @@
+// In-memory storage for payment status (use database in production)
+const paymentStatuses = new Map();
+
 // Netlify function to handle payment callback from PayHero
 exports.handler = async (event, context) => {
   // Process POST request only
@@ -15,10 +18,31 @@ exports.handler = async (event, context) => {
     // Log the callback for debugging
     console.log('Payment callback received:', JSON.stringify(callbackData, null, 2));
     
-    // In a production environment, you would:
-    // 1. Verify the payment status
-    // 2. Update user account status in your database
-    // 3. Log the transaction
+    // Extract payment info from PayHero callback
+    const response = callbackData.response || {};
+    const checkoutRequestId = response.CheckoutRequestID;
+    const externalReference = response.ExternalReference;
+    
+    if (checkoutRequestId) {
+      // Store payment status in memory
+      const paymentData = {
+        status: response.Status === 'Success' ? 'SUCCESS' : 'FAILED',
+        amount: response.Amount,
+        phoneNumber: response.Phone,
+        mpesaReceiptNumber: response.MpesaReceiptNumber,
+        resultDesc: response.ResultDesc,
+        resultCode: response.ResultCode,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Store by both CheckoutRequestID and ExternalReference
+      paymentStatuses.set(checkoutRequestId, paymentData);
+      if (externalReference) {
+        paymentStatuses.set(externalReference, paymentData);
+      }
+      
+      console.log(`Payment status stored for ${checkoutRequestId}:`, paymentData);
+    }
     
     // Acknowledge receipt of callback
     return {
@@ -34,3 +58,10 @@ exports.handler = async (event, context) => {
     };
   }
 };
+
+// Export the payment statuses for other functions to access
+exports.getPaymentStatus = (reference) => {
+  return paymentStatuses.get(reference);
+};
+
+exports.paymentStatuses = paymentStatuses;
