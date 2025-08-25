@@ -40,7 +40,7 @@ exports.handler = async (event, context) => {
   
   try {
     const requestBody = JSON.parse(event.body);
-    const { phoneNumber, userId, amount = 200, description = 'SurvayPay Account Activation' } = requestBody;
+    const { phoneNumber, userId, amount = 10, description = 'SurvayPay Account Activation' } = requestBody;
     
     if (!phoneNumber) {
       return {
@@ -54,7 +54,7 @@ exports.handler = async (event, context) => {
     const externalReference = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     
     // Define the callback URL - use Netlify function URL
-    const callbackUrl = `${process.env.URL || 'https://your-netlify-site.netlify.app'}/.netlify/functions/payment-callback`;
+    const callbackUrl = 'https://boosting.netlify.app/.netlify/functions/payment-callback';
     
     const payload = {
       amount: amount,
