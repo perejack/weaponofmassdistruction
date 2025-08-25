@@ -234,6 +234,11 @@ const InstagramBoost = () => {
     setShowVerificationPopup(false)
     // Mark verification as completed so popup doesn't reopen
     setVerificationTriggered(true)
+    // Activate boost and show dashboard
+    setIsBoostActive(true)
+    setBoostProgress(0)
+    setCurrentFollowers(parseInt(userFollowers || "0"))
+    setShowForm(false)
     toast({
       title: "Boost Activated!",
       description: "Your account is now boosting with premium features.",

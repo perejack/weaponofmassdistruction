@@ -272,6 +272,11 @@ const YouTubeBoost = () => {
     setShowVerificationPopup(false)
     // Mark verification as completed so popup doesn't reopen
     setVerificationTriggered(true)
+    // Activate boost and show dashboard
+    setIsBoostActive(true)
+    setBoostProgress(0)
+    setCurrentSubscribers(parseInt(userSubscribers || "0"))
+    setShowForm(false)
     toast({
       title: "Boost Activated!",
       description: "Your account is now boosting with premium features.",
