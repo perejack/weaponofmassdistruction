@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/enhanced-button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Smartphone, Send, ArrowLeft, Shield, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
+import { Smartphone, Send, ArrowLeft, Shield, CheckCircle, AlertCircle, Loader2, CreditCard } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { ManualVerification } from "./manual-verification"
 
 interface STKPushProps {
   amount: number
@@ -19,12 +20,14 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
   const [paymentReference, setPaymentReference] = useState<string | null>(null)
   const [status, setStatus] = useState<'idle' | 'pending' | 'success' | 'failed'>('idle')
   const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null)
+  const [showManualVerification, setShowManualVerification] = useState(false)
+  const [timeoutReached, setTimeoutReached] = useState(false)
   const { toast } = useToast()
 
   // API URL - Use Netlify functions
   const API_URL = window.location.hostname === 'localhost' 
     ? 'http://localhost:5000'
-    : 'https://survaypay75.netlify.app/.netlify/functions'
+    : 'https://boosting.netlify.app/.netlify/functions'
 
   // Format phone number for Kenyan format
   const formatPhoneNumber = (input: string) => {
@@ -118,25 +121,27 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
     }
   }
 
-  // Poll for payment status
+  // Poll for payment status with timeout for manual verification
   const startPolling = (reference: string) => {
     if (pollInterval) {
       clearInterval(pollInterval)
     }
 
+    let pollCount = 0
+    const maxPolls = 5 // 25 seconds (5 polls * 5 seconds each)
+
     const interval = setInterval(async () => {
+      pollCount++
+      
       try {
         const response = await fetch(`${API_URL}/payment-status/${reference}`)
         const data = await response.json()
         
-        // Log full response for debugging
         console.log('Full payment status response:', data);
 
         if (data.success && data.payment) {
-          // Log the payment data for debugging
           console.log('Payment status response:', data.payment);
           
-          // Check for various success status formats
           const status = data.payment.status?.toUpperCase();
           if (status === 'SUCCESS' || status === 'COMPLETE' || status === 'COMPLETED' || status === '0' || data.payment.mpesaReceiptNumber) {
             clearInterval(interval)
@@ -148,7 +153,6 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
               description: "Your boost has been activated. Returning to boost screen...",
             })
             
-            // Call success callback after showing success message
             setTimeout(() => {
               onSuccess(reference)
             }, 2000)
@@ -164,13 +168,42 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
             })
           }
         }
+        
+        // After 25 seconds, show manual verification option
+        if (pollCount >= maxPolls) {
+          clearInterval(interval)
+          setTimeoutReached(true)
+          setIsProcessing(false)
+          
+          toast({
+            title: "Payment Taking Longer Than Expected",
+            description: "You can verify your payment manually using your M-Pesa transaction code.",
+            variant: "default"
+          })
+        }
       } catch (error) {
         console.error('Error checking payment status:', error)
-        // Continue polling on error
+        
+        // If we've reached max polls, show manual verification
+        if (pollCount >= maxPolls) {
+          clearInterval(interval)
+          setTimeoutReached(true)
+          setIsProcessing(false)
+        }
       }
-    }, 5000) // Check every 5 seconds
+    }, 5000)
 
     setPollInterval(interval)
+  }
+
+  // Handle manual verification success
+  const handleManualVerificationSuccess = (transactionCode: string) => {
+    setStatus('success')
+    setShowManualVerification(false)
+    
+    setTimeout(() => {
+      onSuccess(transactionCode)
+    }, 1000)
   }
 
   // Cleanup polling on unmount
@@ -230,6 +263,22 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
             <p className="text-sm text-muted-foreground">
               STK push sent. Please complete the payment on your phone.
             </p>
+            {timeoutReached && (
+              <div className="mt-3 pt-3 border-t border-blue-500/20">
+                <p className="text-xs text-blue-400 mb-2">
+                  Payment taking longer than expected?
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowManualVerification(true)}
+                  className="text-blue-500 border-blue-500/50 hover:bg-blue-500/10"
+                >
+                  <CreditCard className="w-3 h-3 mr-1" />
+                  Verify Manually
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
@@ -314,6 +363,14 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
           </div>
         </div>
       </CardContent>
+
+      {/* Manual Verification Modal */}
+      <ManualVerification
+        isOpen={showManualVerification}
+        onClose={() => setShowManualVerification(false)}
+        onSuccess={handleManualVerificationSuccess}
+        amount={amount}
+      />
     </Card>
   )
 }
