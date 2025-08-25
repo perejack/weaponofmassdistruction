@@ -53,8 +53,10 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
     return formatted.length === 12 && formatted.startsWith('254')
   }
 
-  // Initiate STK Push payment
+  // Reset status when trying payment again
   const initiatePayment = async () => {
+    // Reset status for new payment attempt
+    setStatus('idle')
     if (!validatePhoneNumber(phoneNumber)) {
       toast({
         title: "Invalid Phone Number",
@@ -135,13 +137,13 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
             
             toast({
               title: "Payment Successful!",
-              description: "Your boost has been activated",
+              description: "Your boost has been activated. Returning to boost screen...",
             })
             
-            // Call success callback after a short delay
+            // Call success callback after showing success message
             setTimeout(() => {
               onSuccess(reference)
-            }, 1500)
+            }, 2000)
           } else if (data.payment.status === 'FAILED') {
             clearInterval(interval)
             setStatus('failed')
@@ -149,7 +151,7 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
             
             toast({
               title: "Payment Failed",
-              description: "Please try again",
+              description: "Transaction was not completed. Please try again.",
               variant: "destructive"
             })
           }
@@ -230,7 +232,7 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
               <span className="font-medium">Payment Successful!</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Your boost has been activated successfully.
+              Your boost has been activated. Returning to boost screen...
             </p>
           </div>
         )}
@@ -242,7 +244,7 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
               <span className="font-medium">Payment Failed</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Please try again or contact support if the issue persists.
+              Transaction was not completed. Please try payment again.
             </p>
           </div>
         )}
@@ -258,6 +260,11 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Processing...
+              </>
+            ) : status === 'failed' ? (
+              <>
+                <Send className="w-4 h-4 mr-2" />
+                Try Payment Again
               </>
             ) : (
               <>

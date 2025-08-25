@@ -317,7 +317,7 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
     return (
       <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[9999] p-2 sm:p-4">
         <STKPush
-          amount={250}
+          amount={20}
           onSuccess={(reference) => {
             setShowSTKPush(false)
             setShowSuccess(true)
@@ -419,7 +419,7 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
                   <span className="text-lg font-bold text-green-400">Account Verification Fee</span>
                 </div>
                 <div className="text-3xl font-black text-foreground mb-2">
-                  KSH 250
+                  KSH 20
                 </div>
                 <p className="text-xs text-muted-foreground">
                   One-time payment to activate premium features and continue boosting your account
@@ -449,7 +449,7 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
                 className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 h-12"
               >
                 <CreditCard className="w-4 h-4 mr-2" />
-                Complete Verification - KSH 250
+                Complete Verification - KSH 20
                 <Crown className="w-4 h-4 ml-2 text-yellow-300" />
               </Button>
               
