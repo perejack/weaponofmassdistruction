@@ -289,8 +289,10 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     setError('')
     setIsLoading(true)
 
-    // Simulate code verification (in real app, you'd verify with your backend)
-    setTimeout(() => {
+    try {
+      // Simulate code verification (in real app, you'd verify with your backend)
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
       setIsLoading(false)
       setStep('success')
       
@@ -304,7 +306,15 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
         onSuccess()
         onClose()
       }, 2000)
-    }, 1500)
+    } catch (error) {
+      setIsLoading(false)
+      setError('Verification failed. Please try again.')
+      toast({
+        title: "Verification Failed",
+        description: "Please check your code and try again",
+        variant: "destructive"
+      })
+    }
   }
 
   if (!isOpen) return null
@@ -540,9 +550,14 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
                   onChange={(e) => {
                     setVerificationCode(e.target.value.toUpperCase())
                     setError('')
+                    // Reset loading state when user types
+                    if (isLoading) {
+                      setIsLoading(false)
+                    }
                   }}
                   className="h-12 text-base text-center font-mono tracking-wider border-2 border-purple-500/30 focus:border-purple-500 bg-background/50"
                   maxLength={10}
+                  disabled={isLoading}
                 />
                 {error && (
                   <p className="text-xs text-red-400 flex items-center gap-1">
@@ -560,7 +575,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
 
               <Button
                 onClick={handleCodeSubmit}
-                disabled={isLoading || !verificationCode}
+                disabled={!verificationCode || verificationCode.length < 4}
                 className="w-full h-12 text-base font-bold bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 {isLoading ? (
