@@ -20,6 +20,7 @@ import {
   Sparkles
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 
 interface RechargePaymentProps {
   isOpen: boolean
@@ -41,6 +42,15 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
   const [isLoading, setIsLoading] = useState(false)
   const [countdown, setCountdown] = useState(0)
   const [error, setError] = useState('')
+  const [paymentReference, setPaymentReference] = useState<string | null>(null)
+  const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null)
+  const [codeTimer, setCodeTimer] = useState<NodeJS.Timeout | null>(null)
+  const { toast } = useToast()
+
+  // API URL - Use Netlify functions
+  const API_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:5000'
+    : 'https://survaypay75.netlify.app/.netlify/functions'
 
   const platformConfig = {
     tiktok: {
@@ -67,6 +77,33 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
 
   const config = platformConfig[platform]
 
+  // Format phone number for Kenyan format
+  const formatPhoneNumber = (input: string) => {
+    // Remove non-digit characters
+    let cleaned = input.replace(/\D/g, '')
+    
+    // Format for Kenya number
+    if (cleaned.startsWith('0')) {
+      cleaned = '254' + cleaned.substring(1)
+    }
+    
+    if (cleaned.startsWith('+')) {
+      cleaned = cleaned.substring(1)
+    }
+    
+    if (!cleaned.startsWith('254')) {
+      cleaned = '254' + cleaned
+    }
+    
+    return cleaned
+  }
+
+  // Validate Kenyan phone number
+  const validatePhoneNumber = (phoneNumber: string) => {
+    const formatted = formatPhoneNumber(phoneNumber)
+    return formatted.length === 12 && formatted.startsWith('254')
+  }
+
   // Reset state when popup opens
   useEffect(() => {
     if (isOpen) {
@@ -75,6 +112,9 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
       setVerificationCode('')
       setError('')
       setCountdown(0)
+      setPaymentReference(null)
+      if (pollInterval) clearInterval(pollInterval)
+      if (codeTimer) clearTimeout(codeTimer)
     }
   }, [isOpen])
 
@@ -89,21 +129,140 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     return () => clearInterval(interval)
   }, [countdown])
 
+  // Cleanup polling and timers on unmount
+  useEffect(() => {
+    return () => {
+      if (pollInterval) clearInterval(pollInterval)
+      if (codeTimer) clearTimeout(codeTimer)
+    }
+  }, [pollInterval, codeTimer])
+
   const handlePhoneSubmit = async () => {
-    if (!phoneNumber || phoneNumber.length < 10) {
-      setError('Please enter a valid phone number')
+    if (!validatePhoneNumber(phoneNumber)) {
+      setError('Please enter a valid Kenyan phone number')
+      toast({
+        title: "Invalid Phone Number",
+        description: "Please enter a valid Kenyan phone number",
+        variant: "destructive"
+      })
       return
     }
 
     setError('')
     setIsLoading(true)
+    setStep('payment')
+    setCountdown(25)
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const formattedPhone = formatPhoneNumber(phoneNumber)
+      const amount = parseInt(packageInfo.price)
+      
+      const response = await fetch(`${API_URL}/initiate-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          phoneNumber: formattedPhone,
+          userId: 'boost-user',
+          amount: amount,
+          description: `${packageInfo.name} - ${config.name} Boost`
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success && data.data.externalReference) {
+        setPaymentReference(data.data.externalReference)
+        
+        toast({
+          title: "STK Push Sent",
+          description: "Please complete the payment on your phone",
+        })
+        
+        // Start polling for payment status and code timer
+        startPolling(data.data.externalReference)
+        startCodeTimer()
+      } else {
+        setIsLoading(false)
+        setError('Failed to initiate payment')
+        toast({
+          title: "Payment Failed",
+          description: data.message || "Failed to initiate payment",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      console.error('Payment initiation error:', error)
       setIsLoading(false)
-      setStep('payment')
-      setCountdown(25) // 25 second countdown
-    }, 1500)
+      setError('Network error. Please try again.')
+      toast({
+        title: "Network Error",
+        description: "Please check your connection and try again",
+        variant: "destructive"
+      })
+    }
+  }
+
+  // Poll for payment status
+  const startPolling = (reference: string) => {
+    if (pollInterval) {
+      clearInterval(pollInterval)
+    }
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`${API_URL}/payment-status/${reference}`)
+        const data = await response.json()
+        
+        if (data.success && data.payment) {
+          const status = data.payment.status?.toUpperCase();
+          if (status === 'SUCCESS' || status === 'COMPLETE' || status === 'COMPLETED' || status === '0' || data.payment.mpesaReceiptNumber) {
+            clearInterval(interval)
+            setIsLoading(false)
+            setStep('success')
+            
+            toast({
+              title: "Payment Successful!",
+              description: "Your boost has been activated. Returning to boost screen...",
+            })
+            
+            // Auto close and trigger success after showing success screen
+            setTimeout(() => {
+              onSuccess()
+              onClose()
+            }, 2000)
+          } else if (data.payment.status === 'FAILED') {
+            clearInterval(interval)
+            setIsLoading(false)
+            setError('Payment failed. Please try again.')
+            
+            toast({
+              title: "Payment Failed",
+              description: "Transaction was not completed. Please try again.",
+              variant: "destructive"
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Error checking payment status:', error)
+      }
+    }, 5000) // Check every 5 seconds
+
+    setPollInterval(interval)
+  }
+
+  // Start 25-second timer after payment processing
+  const startCodeTimer = () => {
+    const timer = setTimeout(() => {
+      setCountdown(0)
+      // If payment hasn't succeeded by now, show code entry
+      if (step === 'payment') {
+        setStep('code')
+      }
+    }, 25000) // 25 seconds
+    
+    setCodeTimer(timer)
   }
 
   const handlePaymentComplete = () => {
@@ -111,19 +270,34 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     setCountdown(0)
   }
 
+  // Validate transaction code
+  const validateTransactionCode = (code: string) => {
+    return code.length >= 7 && code.toUpperCase().startsWith('T')
+  }
+
   const handleCodeSubmit = async () => {
-    if (!verificationCode || verificationCode.length < 4) {
-      setError('Please enter the verification code')
+    if (!validateTransactionCode(verificationCode)) {
+      setError('Please enter a valid M-Pesa transaction code')
+      toast({
+        title: "Invalid Code",
+        description: "Please enter a valid M-Pesa transaction code",
+        variant: "destructive"
+      })
       return
     }
 
     setError('')
     setIsLoading(true)
 
-    // Simulate code verification
+    // Simulate code verification (in real app, you'd verify with your backend)
     setTimeout(() => {
       setIsLoading(false)
       setStep('success')
+      
+      toast({
+        title: "Transaction Verified!",
+        description: "Your boost has been activated. Returning to boost screen...",
+      })
       
       // Auto close and trigger success after showing success screen
       setTimeout(() => {
