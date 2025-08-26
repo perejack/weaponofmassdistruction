@@ -258,6 +258,8 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
       setCountdown(0)
       // If payment hasn't succeeded by now, show code entry
       if (step === 'payment') {
+        // Stop any loading state when moving to code entry
+        setIsLoading(false)
         setStep('code')
       }
     }, 25000) // 25 seconds
@@ -266,6 +268,8 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
   }
 
   const handlePaymentComplete = () => {
+    // Stop loading and show code entry immediately
+    setIsLoading(false)
     setStep('code')
     setCountdown(0)
   }
@@ -557,7 +561,6 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
                   }}
                   className="h-12 text-base text-center font-mono tracking-wider border-2 border-purple-500/30 focus:border-purple-500 bg-background/50"
                   maxLength={10}
-                  disabled={isLoading}
                 />
                 {error && (
                   <p className="text-xs text-red-400 flex items-center gap-1">
@@ -575,7 +578,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
 
               <Button
                 onClick={handleCodeSubmit}
-                disabled={!verificationCode || verificationCode.length < 4}
+                disabled={!validateTransactionCode(verificationCode) || isLoading}
                 className="w-full h-12 text-base font-bold bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 {isLoading ? (
