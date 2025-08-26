@@ -242,7 +242,7 @@ export function CongratulationsPopup({
                     )}
                   >
                     <Gift className="w-4 h-4 mr-2" />
-                    Start Transfer
+                    Finish
                     <Zap className="w-4 h-4 ml-2" />
                   </Button>
 

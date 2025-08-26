@@ -89,7 +89,7 @@ export function TransferAnimation({
         setCurrentStep(step.id)
         
         if (step.id === "transferring") {
-          // Start the transfer animation (1% every 2 seconds)
+          // Start the transfer animation (1% every 1 second)
           intervalId = setInterval(() => {
             setTransferProgress(prev => {
               const next = prev + 1
@@ -110,7 +110,7 @@ export function TransferAnimation({
               
               return next
             })
-          }, 2000) // 1% every 2 seconds
+          }, 1000) // 1% every 1 second
           return
         } else {
           await new Promise(resolve => {
