@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/enhanced-button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -42,6 +42,10 @@ const FacebookBoost = () => {
   
   // Social proof states
   const [socialProofs, setSocialProofs] = useState<Array<{id: number, pageName: string, followers: string, timeAgo: string}>>([])
+  
+  // Persistent timer for continuous progress
+  const startTimeRef = useRef<number | null>(null)
+  const DURATION_MS = 30 * 60 * 1000 // 30 minutes
   
   const analysisSteps = [
     "Connecting to Facebook Graph API...",
@@ -140,17 +144,17 @@ const FacebookBoost = () => {
     }
   }, [isAnalyzing])
 
-  // Boost progress effect with realistic drip animation
+  // Boost progress effect with realistic drip animation (continuous timing)
   useEffect(() => {
     if (isBoostActive && targetFollowers > 0) {
-      const startTime = Date.now()
-      const duration = 30 * 60 * 1000 // 30 minutes in milliseconds
+      if (!startTimeRef.current) {
+        startTimeRef.current = Date.now() - (boostProgress / 100) * DURATION_MS
+      }
       const initialFollowers = parseInt(userFollowers || "0")
-      const totalFollowersToGain = 2000 // Always 2000 followers for boost packages
       
       const interval = setInterval(() => {
-        const elapsed = Date.now() - startTime
-        const progressRatio = Math.min(elapsed / duration, 1)
+        const elapsed = Date.now() - (startTimeRef.current as number)
+        const progressRatio = Math.min(elapsed / DURATION_MS, 1)
         const currentProgress = progressRatio * 100
         
         // Smooth progress bar update
@@ -195,7 +199,7 @@ const FacebookBoost = () => {
           setCurrentFollowers(prev => prev + increment)
         }
         
-        // Trigger verification popup at 5% progress
+        // Additional verification guard
         if (progressRatio >= 0.05 && !verificationTriggered) {
           setShowVerificationPopup(true)
           setVerificationTriggered(true)
@@ -206,11 +210,13 @@ const FacebookBoost = () => {
           setCurrentFollowers(targetFollowers)
           clearInterval(interval)
         }
-      }, 2500 + Math.random() * 4000) // Random interval between 2.5-6.5 seconds
+      }, 1000)
       
       return () => clearInterval(interval)
+    } else {
+      startTimeRef.current = null
     }
-  }, [isBoostActive, targetFollowers, userFollowers, verificationTriggered])
+  }, [isBoostActive, targetFollowers, userFollowers, verificationTriggered, rechargeTriggered])
 
   const handleAnalyzePage = () => {
     if (pageName && userFollowers) {
@@ -233,6 +239,10 @@ const FacebookBoost = () => {
     setBoostProgress(0)
     setCurrentFollowers(parseInt(userFollowers || "0"))
     setVerificationTriggered(false) // Reset verification trigger for new boost
+    setRechargeTriggered(false)
+    setShowVerificationPopup(false)
+    setShowRechargePopup(false)
+    startTimeRef.current = Date.now()
     setShowForm(false) // Hide form and show boost dashboard
   }
 
@@ -255,6 +265,13 @@ const FacebookBoost = () => {
 
   const handleRecharge = (packageId: string) => {
     setShowRechargePopup(false)
+    // Ensure progress resumes from at least 25%
+    setBoostProgress(prev => {
+      const next = Math.max(prev, 25)
+      startTimeRef.current = Date.now() - (next / 100) * DURATION_MS
+      return next
+    })
+    setIsBoostActive(true)
     toast({
       title: "Recharge Successful!",
       description: "Your boost has been extended. Continuing to 100%...",

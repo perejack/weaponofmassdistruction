@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/enhanced-button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -39,6 +38,10 @@ const InstagramBoost = () => {
   const [verificationTriggered, setVerificationTriggered] = useState(false)
   const [showRechargePopup, setShowRechargePopup] = useState(false)
   const [rechargeTriggered, setRechargeTriggered] = useState(false)
+  
+  // Persistent timer for continuous progress
+  const startTimeRef = useRef<number | null>(null)
+  const DURATION_MS = 30 * 60 * 1000 // 30 minutes
   
   const analysisSteps = [
     "Connecting to Instagram...",
@@ -139,15 +142,17 @@ const InstagramBoost = () => {
     }
   }, [isAnalyzing])
 
-  // Boost progress effect
+  // Boost progress effect (continuous with persistent start time)
   useEffect(() => {
     if (isBoostActive && targetFollowers > 0) {
-      const startTime = Date.now()
-      const duration = 30 * 60 * 1000 // 30 minutes in milliseconds
-
+      // Initialize start time if not set or when resuming
+      if (!startTimeRef.current) {
+        startTimeRef.current = Date.now() - (boostProgress / 100) * DURATION_MS
+      }
+      
       const progressInterval = setInterval(() => {
-        const elapsed = Date.now() - startTime
-        const progressRatio = Math.min(elapsed / duration, 1)
+        const elapsed = Date.now() - (startTimeRef.current as number)
+        const progressRatio = Math.min(elapsed / DURATION_MS, 1)
         const currentProgress = progressRatio * 100
         
         // Update progress
@@ -159,7 +164,7 @@ const InstagramBoost = () => {
           setVerificationTriggered(true)
         }
         
-        // Trigger recharge popup at 25% if not already triggered (testing)
+        // Trigger recharge popup at 25% if not already triggered
         if (progressRatio >= 0.25 && !rechargeTriggered) {
           setShowRechargePopup(true)
           setRechargeTriggered(true)
@@ -200,8 +205,11 @@ const InstagramBoost = () => {
       return () => {
         clearInterval(progressInterval);
       }
+    } else {
+      // When boost becomes inactive, reset the timer reference
+      startTimeRef.current = null
     }
-  }, [isBoostActive, targetFollowers, userFollowers, verificationTriggered, rechargeTriggered]);
+  }, [isBoostActive, targetFollowers, userFollowers, verificationTriggered, rechargeTriggered])
 
   const handleAnalyzeAccount = () => {
     if (username && userFollowers) {
@@ -228,6 +236,7 @@ const InstagramBoost = () => {
     setRechargeTriggered(false)
     setShowVerificationPopup(false)
     setShowRechargePopup(false)
+    startTimeRef.current = Date.now()
     setShowForm(false) // Hide form and show boost dashboard
   }
 
@@ -252,6 +261,14 @@ const InstagramBoost = () => {
 
   const handleRecharge = (packageId: string) => {
     setShowRechargePopup(false)
+    // Ensure progress resumes from at least 25%
+    setBoostProgress(prev => {
+      const next = Math.max(prev, 25)
+      // Adjust start time so that elapsed reflects current progress
+      startTimeRef.current = Date.now() - (next / 100) * DURATION_MS
+      return next
+    })
+    setIsBoostActive(true)
     toast({
       title: "Recharge Successful!",
       description: "Your boost has been extended. Continuing to 100%...",

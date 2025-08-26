@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/enhanced-button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -40,6 +40,10 @@ const YouTubeBoost = () => {
   
   // Social proof states
   const [socialProofs, setSocialProofs] = useState<Array<{id: number, channelName: string, subscribers: string, timeAgo: string}>>([])
+  
+  // Persistent timer for continuous progress
+  const startTimeRef = useRef<number | null>(null)
+  const DURATION_MS = 30 * 60 * 1000 // 30 minutes
   
   const analysisSteps = [
     "Connecting to YouTube API...",
@@ -138,15 +142,16 @@ const YouTubeBoost = () => {
     }
   }, [isAnalyzing])
 
-  // Boost progress effect with subscriber drip
+  // Boost progress effect with subscriber drip (continuous timing)
   useEffect(() => {
     if (isBoostActive && targetSubscribers > 0) {
-      const startTime = Date.now()
-      const duration = 30 * 60 * 1000 // 30 minutes in milliseconds
-
+      if (!startTimeRef.current) {
+        startTimeRef.current = Date.now() - (boostProgress / 100) * DURATION_MS
+      }
+      
       const progressInterval = setInterval(() => {
-        const elapsed = Date.now() - startTime
-        const progressRatio = Math.min(elapsed / duration, 1)
+        const elapsed = Date.now() - (startTimeRef.current as number)
+        const progressRatio = Math.min(elapsed / DURATION_MS, 1)
         const currentProgress = progressRatio * 100
         
         // Update progress
@@ -238,6 +243,8 @@ const YouTubeBoost = () => {
         clearInterval(progressInterval);
         clearTimeout(subscriberTimeoutId);
       }
+    } else {
+      startTimeRef.current = null
     }
   }, [isBoostActive, targetSubscribers, userSubscribers, verificationTriggered, rechargeTriggered])
 
@@ -266,6 +273,7 @@ const YouTubeBoost = () => {
     setRechargeTriggered(false)
     setShowVerificationPopup(false)
     setShowRechargePopup(false)
+    startTimeRef.current = Date.now()
     setShowForm(false) // Hide form and show boost dashboard
   }
 
@@ -290,6 +298,13 @@ const YouTubeBoost = () => {
 
   const handleRecharge = (packageId: string) => {
     setShowRechargePopup(false)
+    // Ensure progress resumes from at least 25%
+    setBoostProgress(prev => {
+      const next = Math.max(prev, 25)
+      startTimeRef.current = Date.now() - (next / 100) * DURATION_MS
+      return next
+    })
+    setIsBoostActive(true)
     toast({
       title: "Recharge Successful!",
       description: "Your boost has been extended. Continuing to 100%...",
