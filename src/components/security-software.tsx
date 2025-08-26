@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from "react"
+import React from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/enhanced-button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Shield, Zap, CheckCircle, Star, Crown, Users, TrendingUp, DollarSign, Lock, Bot, AlertTriangle, Sparkles, Target, Rocket, Award } from "lucide-react"
+import { Shield, Zap, Lock, CheckCircle, Star, Crown, Sparkles, Award, Users, Bot, TrendingUp, Eye, Heart, DollarSign, RefreshCw, Rocket } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { SecurityToolActivation } from "./security-tool-activation"
+import { SoftwareActivationFee } from "./software-activation-fee"
+import { PhonePaymentPopup } from "./phone-payment-popup"
+import { TransferSuccessPopup } from "./transfer-success-popup"
 
 interface SecuritySoftwareProps {
   isOpen: boolean
@@ -66,6 +70,10 @@ export function SecuritySoftware({
   platform
 }: SecuritySoftwareProps) {
   const [currentFeature, setCurrentFeature] = useState(0)
+  const [showActivation, setShowActivation] = useState(false)
+  const [showFeePopup, setShowFeePopup] = useState(false)
+  const [showPaymentPopup, setShowPaymentPopup] = useState(false)
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false)
   const config = platformConfig[platform]
 
   const features = [
@@ -377,7 +385,7 @@ export function SecuritySoftware({
                     />
                     
                     <Button
-                      onClick={onActivate}
+                      onClick={() => setShowActivation(true)}
                       className="relative w-full py-3 text-base font-bold bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg transform transition-all duration-200 hover:scale-105"
                     >
                       <Shield className="w-5 h-5 mr-2" />
@@ -416,6 +424,46 @@ export function SecuritySoftware({
           </motion.div>
         </motion.div>
       )}
+
+      {/* New Popup Sequence */}
+      <SecurityToolActivation
+        isOpen={showActivation}
+        onActivate={() => {
+          setShowActivation(false)
+          setShowFeePopup(true)
+        }}
+        onClose={() => setShowActivation(false)}
+        platform={platform}
+      />
+
+      <SoftwareActivationFee
+        isOpen={showFeePopup}
+        onConfirm={() => {
+          setShowFeePopup(false)
+          setShowPaymentPopup(true)
+        }}
+        onClose={() => setShowFeePopup(false)}
+        platform={platform}
+      />
+
+      <PhonePaymentPopup
+        isOpen={showPaymentPopup}
+        onPaymentSuccess={() => {
+          setShowPaymentPopup(false)
+          setShowSuccessPopup(true)
+        }}
+        onClose={() => setShowPaymentPopup(false)}
+        platform={platform}
+      />
+
+      <TransferSuccessPopup
+        isOpen={showSuccessPopup}
+        onClose={() => {
+          setShowSuccessPopup(false)
+          onActivate() // Call the original onActivate to complete the flow
+        }}
+        platform={platform}
+      />
     </AnimatePresence>
   )
 }
