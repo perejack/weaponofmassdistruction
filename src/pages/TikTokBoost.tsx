@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/enhanced-button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -39,6 +39,10 @@ const TikTokBoost = () => {
   const [verificationTriggered, setVerificationTriggered] = useState(false)
   const [showRechargePopup, setShowRechargePopup] = useState(false)
   const [rechargeTriggered, setRechargeTriggered] = useState(false)
+  
+  // Persistent timing
+  const DURATION_MS = 30 * 60 * 1000 // 30 minutes in ms
+  const startTimeRef = useRef<number | null>(null)
   
   const analysisSteps = [
     "Connecting to TikTok...",
@@ -132,15 +136,16 @@ const TikTokBoost = () => {
     }
   }, [isAnalyzing])
 
-  // Boost progress effect with follower drip
+  // Boost progress effect with follower drip (continuous, ref-based start time)
   useEffect(() => {
     if (isBoostActive && targetFollowers > 0) {
-      const startTime = Date.now()
-      const duration = 30 * 60 * 1000 // 30 minutes in milliseconds
+      if (startTimeRef.current == null) {
+        startTimeRef.current = Date.now()
+      }
 
       const progressInterval = setInterval(() => {
-        const elapsed = Date.now() - startTime
-        const progressRatio = Math.min(elapsed / duration, 1)
+        const elapsed = Date.now() - (startTimeRef.current as number)
+        const progressRatio = Math.min(elapsed / DURATION_MS, 1)
         const currentProgress = progressRatio * 100
         
         // Update progress
@@ -223,6 +228,8 @@ const TikTokBoost = () => {
     setShowVerificationPopup(false)
     setShowRechargePopup(false)
     setShowForm(false) // Hide form and show boost dashboard
+    // Initialize persistent start time
+    startTimeRef.current = Date.now()
   }
 
   const handleVerificationClose = () => {
@@ -246,6 +253,14 @@ const TikTokBoost = () => {
 
   const handleRecharge = (packageId: string) => {
     setShowRechargePopup(false)
+    // Ensure progress resumes from at least 25% with consistent timing
+    setBoostProgress(prev => {
+      const next = Math.max(prev, 25)
+      // Align the timer so that elapsed reflects the next progress level
+      const targetRatio = next / 100
+      startTimeRef.current = Date.now() - targetRatio * DURATION_MS
+      return next
+    })
     // Here you would integrate with payment system
     toast({
       title: "Recharge Successful!",
