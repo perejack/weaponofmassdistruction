@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { VerificationPopup } from "@/components/verification-popup"
 import { RechargePopup } from "@/components/recharge-popup"
-import { CompletionPopup } from "@/components/completion-popup"
+import { CompletionFlow } from "@/components/completion-flow"
 import { useToast } from "@/hooks/use-toast"
 
 const FacebookBoost = () => {
@@ -40,7 +40,10 @@ const FacebookBoost = () => {
   const [verificationTriggered, setVerificationTriggered] = useState(false)
   const [showRechargePopup, setShowRechargePopup] = useState(false)
   const [rechargeTriggered, setRechargeTriggered] = useState(false)
-  const [showCompletionPopup, setShowCompletionPopup] = useState(false)
+  
+  // Completion flow states
+  const [showCompletionFlow, setShowCompletionFlow] = useState(false)
+  const [completionTriggered, setCompletionTriggered] = useState(false)
   
   // Social proof states
   const [socialProofs, setSocialProofs] = useState<Array<{id: number, pageName: string, followers: string, timeAgo: string}>>([])
@@ -207,11 +210,18 @@ const FacebookBoost = () => {
           setVerificationTriggered(true)
         }
         
+        if (progressRatio >= 0.4) {
+          // Trigger completion flow at 40% for testing
+          if (!completionTriggered) {
+            setShowCompletionFlow(true)
+            setCompletionTriggered(true)
+          }
+        }
+        
         // Complete the boost when time is up
         if (progressRatio >= 1) {
           setCurrentFollowers(targetFollowers)
           clearInterval(interval)
-          setShowCompletionPopup(true)
         }
       }, 1000)
       
@@ -243,9 +253,10 @@ const FacebookBoost = () => {
     setCurrentFollowers(parseInt(userFollowers || "0"))
     setVerificationTriggered(false) // Reset verification trigger for new boost
     setRechargeTriggered(false)
+    setCompletionTriggered(false)
     setShowVerificationPopup(false)
     setShowRechargePopup(false)
-    setShowCompletionPopup(false)
+    setShowCompletionFlow(false)
     startTimeRef.current = Date.now()
     setShowForm(false) // Hide form and show boost dashboard
   }
@@ -281,11 +292,6 @@ const FacebookBoost = () => {
       description: "Your boost has been extended. Continuing to 100%...",
       duration: 3000,
     })
-  }
-
-  const handleCompletionClose = () => {
-    setShowCompletionPopup(false)
-    setIsBoostActive(false)
   }
 
   return (
@@ -795,13 +801,12 @@ const FacebookBoost = () => {
           currentFollowers={currentFollowers}
         />
 
-        {/* Completion Popup */}
-        <CompletionPopup
-          isOpen={showCompletionPopup}
-          onClose={handleCompletionClose}
+        {/* Completion Flow */}
+        <CompletionFlow
+          isOpen={showCompletionFlow}
+          onClose={() => setShowCompletionFlow(false)}
           platform="facebook"
           followersGained={targetFollowers - parseInt(userFollowers || "0")}
-          currentFollowers={targetFollowers}
         />
       </div>
     </div>

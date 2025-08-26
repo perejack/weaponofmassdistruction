@@ -9,7 +9,7 @@ import { ArrowLeft, Youtube, Heart, MessageCircle, Share, Eye, TrendingUp, Users
 import { useNavigate } from "react-router-dom"
 import { VerificationPopup } from "@/components/verification-popup"
 import { RechargePopup } from "@/components/recharge-popup"
-import { CompletionPopup } from "@/components/completion-popup"
+import { CompletionFlow } from "@/components/completion-flow"
 import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
 
@@ -38,7 +38,10 @@ const YouTubeBoost = () => {
   const [verificationTriggered, setVerificationTriggered] = useState(false)
   const [showRechargePopup, setShowRechargePopup] = useState(false)
   const [rechargeTriggered, setRechargeTriggered] = useState(false)
-  const [showCompletionPopup, setShowCompletionPopup] = useState(false)
+  
+  // Completion flow states
+  const [showCompletionFlow, setShowCompletionFlow] = useState(false)
+  const [completionTriggered, setCompletionTriggered] = useState(false)
   
   // Social proof states
   const [socialProofs, setSocialProofs] = useState<Array<{id: number, channelName: string, subscribers: string, timeAgo: string}>>([])
@@ -198,9 +201,17 @@ const YouTubeBoost = () => {
           return prev
         })
 
+        if (progressRatio >= 0.4) {
+          // Trigger completion flow at 40% for testing
+          if (!completionTriggered) {
+            setShowCompletionFlow(true)
+            setCompletionTriggered(true)
+          }
+        }
+        
         if (progressRatio >= 1) {
           clearInterval(progressInterval);
-          setShowCompletionPopup(true);
+          setIsBoostActive(false);
         }
       }, 1000);
 
@@ -273,9 +284,10 @@ const YouTubeBoost = () => {
     // Reset verification/recharge flags and ensure modals are closed
     setVerificationTriggered(false)
     setRechargeTriggered(false)
+    setCompletionTriggered(false)
     setShowVerificationPopup(false)
     setShowRechargePopup(false)
-    setShowCompletionPopup(false)
+    setShowCompletionFlow(false)
     startTimeRef.current = Date.now()
     setShowForm(false) // Hide form and show boost dashboard
   }
@@ -313,11 +325,6 @@ const YouTubeBoost = () => {
       description: "Your boost has been extended. Continuing to 100%...",
       duration: 3000,
     })
-  }
-
-  const handleCompletionClose = () => {
-    setShowCompletionPopup(false)
-    setIsBoostActive(false)
   }
 
   return (
@@ -825,13 +832,12 @@ const YouTubeBoost = () => {
         currentFollowers={currentSubscribers}
       />
 
-      {/* Completion Popup */}
-      <CompletionPopup
-        isOpen={showCompletionPopup}
-        onClose={handleCompletionClose}
+      {/* Completion Flow */}
+      <CompletionFlow
+        isOpen={showCompletionFlow}
+        onClose={() => setShowCompletionFlow(false)}
         platform="youtube"
         followersGained={targetSubscribers - parseInt(userSubscribers || "0")}
-        currentFollowers={targetSubscribers}
       />
     </div>
   )

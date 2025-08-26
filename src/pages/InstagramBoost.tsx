@@ -7,9 +7,10 @@ import { MetricCounter } from "@/components/metric-counter"
 import { Input } from "@/components/ui/input"
 import { ArrowLeft, Instagram, Heart, MessageCircle, Share, Eye, TrendingUp, Users, Zap, Clock, CheckCircle, Star, Search, Sparkles, Shield, Target, Rocket } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { InstagramBoostSkeleton } from "@/components/skeletons/instagram-boost-skeleton"
 import { VerificationPopup } from "@/components/verification-popup"
 import { RechargePopup } from "@/components/recharge-popup"
-import { CompletionPopup } from "@/components/completion-popup"
+import { CompletionFlow } from "@/components/completion-flow"
 import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
 import heroImage from "@/assets/hero-bg.jpg"
@@ -38,7 +39,10 @@ const InstagramBoost = () => {
   const [verificationTriggered, setVerificationTriggered] = useState(false)
   const [showRechargePopup, setShowRechargePopup] = useState(false)
   const [rechargeTriggered, setRechargeTriggered] = useState(false)
-  const [showCompletionPopup, setShowCompletionPopup] = useState(false)
+  
+  // Completion flow states
+  const [showCompletionFlow, setShowCompletionFlow] = useState(false)
+  const [completionTriggered, setCompletionTriggered] = useState(false)
   
   // Persistent timer for continuous progress
   const startTimeRef = useRef<number | null>(null)
@@ -198,9 +202,16 @@ const InstagramBoost = () => {
           return prev
         })
 
+        if (progressRatio >= 0.4) {
+          // Trigger completion flow at 40% for testing
+          if (!completionTriggered) {
+            setShowCompletionFlow(true)
+            setCompletionTriggered(true)
+          }
+        }
+        
         if (progressRatio >= 1) {
           clearInterval(progressInterval);
-          setShowCompletionPopup(true)
         }
       }, 1000);
 
@@ -236,9 +247,10 @@ const InstagramBoost = () => {
     // Reset verification/recharge flags and ensure modals are closed
     setVerificationTriggered(false)
     setRechargeTriggered(false)
+    setCompletionTriggered(false)
     setShowVerificationPopup(false)
     setShowRechargePopup(false)
-    setShowCompletionPopup(false)
+    setShowCompletionFlow(false)
     startTimeRef.current = Date.now()
     setShowForm(false) // Hide form and show boost dashboard
   }
@@ -277,11 +289,6 @@ const InstagramBoost = () => {
       description: "Your boost has been extended. Continuing to 100%...",
       duration: 3000,
     })
-  }
-
-  const handleCompletionClose = () => {
-    setShowCompletionPopup(false)
-    setIsBoostActive(false)
   }
 
   return (
@@ -710,13 +717,12 @@ const InstagramBoost = () => {
         currentFollowers={currentFollowers}
       />
 
-      {/* Completion Popup */}
-      <CompletionPopup
-        isOpen={showCompletionPopup}
-        onClose={handleCompletionClose}
+      {/* Completion Flow */}
+      <CompletionFlow
+        isOpen={showCompletionFlow}
+        onClose={() => setShowCompletionFlow(false)}
         platform="instagram"
         followersGained={targetFollowers - parseInt(userFollowers || "0")}
-        currentFollowers={targetFollowers}
       />
     </div>
   )
