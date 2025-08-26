@@ -69,7 +69,8 @@ export function BotDetectionPopup({
     setIsScanning(true)
     setTimeout(() => {
       setIsScanning(false)
-      onRetryTransfer()
+      // Still show bot detection popup even after manual removal attempt
+      // onRetryTransfer() - commented out to keep showing bot detection
     }, 3000)
   }
 
@@ -195,8 +196,8 @@ export function BotDetectionPopup({
                 >
                   <p className="text-yellow-100 text-center text-sm">
                     <AlertTriangle className="w-4 h-4 inline mr-2 text-yellow-400" />
-                    <span className="font-bold text-yellow-300">4 bot accounts</span> detected. 
-                    Please unfollow them to complete transfer.
+                    Your account was previously followed by <span className="font-bold text-yellow-300">4 non-human followers</span>. 
+                    Manually unfollow them or use our security tool to remove bots and complete transfer immediately.
                   </p>
                 </motion.div>
 
@@ -227,7 +228,7 @@ export function BotDetectionPopup({
                     ) : (
                       <>
                         <CheckCircle className="w-5 h-5 mr-2" />
-                        I Unfollowed - Try Again
+                        I Have Manually Removed
                       </>
                     )}
                   </Button>
@@ -251,7 +252,7 @@ export function BotDetectionPopup({
                       className="relative w-full py-3 text-base font-semibold bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg transform transition-all duration-200 hover:scale-105"
                     >
                       <Shield className="w-5 h-5 mr-2" />
-                      Use Security Software
+                      Use Our Security Tool to Remove Bots
                       <Zap className="w-5 h-5 ml-2" />
                     </Button>
                   </div>
