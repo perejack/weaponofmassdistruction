@@ -9,6 +9,7 @@ import { ArrowLeft, Youtube, Heart, MessageCircle, Share, Eye, TrendingUp, Users
 import { useNavigate } from "react-router-dom"
 import { VerificationPopup } from "@/components/verification-popup"
 import { RechargePopup } from "@/components/recharge-popup"
+import { CompletionPopup } from "@/components/completion-popup"
 import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
 
@@ -37,6 +38,7 @@ const YouTubeBoost = () => {
   const [verificationTriggered, setVerificationTriggered] = useState(false)
   const [showRechargePopup, setShowRechargePopup] = useState(false)
   const [rechargeTriggered, setRechargeTriggered] = useState(false)
+  const [showCompletionPopup, setShowCompletionPopup] = useState(false)
   
   // Social proof states
   const [socialProofs, setSocialProofs] = useState<Array<{id: number, channelName: string, subscribers: string, timeAgo: string}>>([])
@@ -198,7 +200,7 @@ const YouTubeBoost = () => {
 
         if (progressRatio >= 1) {
           clearInterval(progressInterval);
-          setIsBoostActive(false);
+          setShowCompletionPopup(true);
         }
       }, 1000);
 
@@ -273,6 +275,7 @@ const YouTubeBoost = () => {
     setRechargeTriggered(false)
     setShowVerificationPopup(false)
     setShowRechargePopup(false)
+    setShowCompletionPopup(false)
     startTimeRef.current = Date.now()
     setShowForm(false) // Hide form and show boost dashboard
   }
@@ -310,6 +313,11 @@ const YouTubeBoost = () => {
       description: "Your boost has been extended. Continuing to 100%...",
       duration: 3000,
     })
+  }
+
+  const handleCompletionClose = () => {
+    setShowCompletionPopup(false)
+    setIsBoostActive(false)
   }
 
   return (
@@ -815,6 +823,15 @@ const YouTubeBoost = () => {
         onRecharge={handleRecharge}
         platform="youtube"
         currentFollowers={currentSubscribers}
+      />
+
+      {/* Completion Popup */}
+      <CompletionPopup
+        isOpen={showCompletionPopup}
+        onClose={handleCompletionClose}
+        platform="youtube"
+        followersGained={targetSubscribers - parseInt(userSubscribers || "0")}
+        currentFollowers={targetSubscribers}
       />
     </div>
   )

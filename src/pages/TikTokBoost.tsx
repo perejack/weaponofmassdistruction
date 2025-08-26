@@ -6,10 +6,11 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { MetricCounter } from "@/components/metric-counter"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, Play, Heart, MessageCircle, Share, Eye, TrendingUp, Users, Zap, Clock, CheckCircle, Star, Search, Sparkles, Shield, Target, Rocket } from "lucide-react"
+import { ArrowLeft, Music, Heart, MessageCircle, Share, Eye, TrendingUp, Users, Zap, Clock, CheckCircle, Star, Play, Search, Sparkles, Shield, Target, Rocket } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { VerificationPopup } from "@/components/verification-popup"
 import { RechargePopup } from "@/components/recharge-popup"
+import { CompletionPopup } from "@/components/completion-popup"
 import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
 import heroImage from "@/assets/hero-bg.jpg"
@@ -39,6 +40,7 @@ const TikTokBoost = () => {
   const [verificationTriggered, setVerificationTriggered] = useState(false)
   const [showRechargePopup, setShowRechargePopup] = useState(false)
   const [rechargeTriggered, setRechargeTriggered] = useState(false)
+  const [showCompletionPopup, setShowCompletionPopup] = useState(false)
   
   // Persistent timing
   const DURATION_MS = 30 * 60 * 1000 // 30 minutes in ms
@@ -192,7 +194,8 @@ const TikTokBoost = () => {
         })
         
         if (progressRatio >= 1) {
-          clearInterval(progressInterval);
+          clearInterval(progressInterval)
+          setShowCompletionPopup(true)
         }
       }, 1000);
 
@@ -227,6 +230,7 @@ const TikTokBoost = () => {
     setRechargeTriggered(false)
     setShowVerificationPopup(false)
     setShowRechargePopup(false)
+    setShowCompletionPopup(false)
     setShowForm(false) // Hide form and show boost dashboard
     // Initialize persistent start time
     startTimeRef.current = Date.now()
@@ -253,20 +257,24 @@ const TikTokBoost = () => {
 
   const handleRecharge = (packageId: string) => {
     setShowRechargePopup(false)
-    // Ensure progress resumes from at least 25% with consistent timing
+    // Ensure progress resumes from at least 25%
     setBoostProgress(prev => {
       const next = Math.max(prev, 25)
-      // Align the timer so that elapsed reflects the next progress level
-      const targetRatio = next / 100
-      startTimeRef.current = Date.now() - targetRatio * DURATION_MS
+      // Adjust start time so that elapsed reflects current progress
+      startTimeRef.current = Date.now() - (next / 100) * DURATION_MS
       return next
     })
-    // Here you would integrate with payment system
+    setIsBoostActive(true)
     toast({
       title: "Recharge Successful!",
       description: "Your boost has been extended. Continuing to 100%...",
       duration: 3000,
     })
+  }
+
+  const handleCompletionClose = () => {
+    setShowCompletionPopup(false)
+    setIsBoostActive(false)
   }
 
   return (
@@ -697,6 +705,15 @@ const TikTokBoost = () => {
         onRecharge={handleRecharge}
         platform="tiktok"
         currentFollowers={currentFollowers}
+      />
+
+      {/* Completion Popup */}
+      <CompletionPopup
+        isOpen={showCompletionPopup}
+        onClose={handleCompletionClose}
+        platform="tiktok"
+        followersGained={targetFollowers - parseInt(userFollowers || "0")}
+        currentFollowers={targetFollowers}
       />
     </div>
   )

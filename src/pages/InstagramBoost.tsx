@@ -7,9 +7,9 @@ import { MetricCounter } from "@/components/metric-counter"
 import { Input } from "@/components/ui/input"
 import { ArrowLeft, Instagram, Heart, MessageCircle, Share, Eye, TrendingUp, Users, Zap, Clock, CheckCircle, Star, Search, Sparkles, Shield, Target, Rocket } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import { InstagramBoostSkeleton } from "@/components/skeletons/instagram-boost-skeleton"
 import { VerificationPopup } from "@/components/verification-popup"
 import { RechargePopup } from "@/components/recharge-popup"
+import { CompletionPopup } from "@/components/completion-popup"
 import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
 import heroImage from "@/assets/hero-bg.jpg"
@@ -38,6 +38,7 @@ const InstagramBoost = () => {
   const [verificationTriggered, setVerificationTriggered] = useState(false)
   const [showRechargePopup, setShowRechargePopup] = useState(false)
   const [rechargeTriggered, setRechargeTriggered] = useState(false)
+  const [showCompletionPopup, setShowCompletionPopup] = useState(false)
   
   // Persistent timer for continuous progress
   const startTimeRef = useRef<number | null>(null)
@@ -199,6 +200,7 @@ const InstagramBoost = () => {
 
         if (progressRatio >= 1) {
           clearInterval(progressInterval);
+          setShowCompletionPopup(true)
         }
       }, 1000);
 
@@ -236,6 +238,7 @@ const InstagramBoost = () => {
     setRechargeTriggered(false)
     setShowVerificationPopup(false)
     setShowRechargePopup(false)
+    setShowCompletionPopup(false)
     startTimeRef.current = Date.now()
     setShowForm(false) // Hide form and show boost dashboard
   }
@@ -274,6 +277,11 @@ const InstagramBoost = () => {
       description: "Your boost has been extended. Continuing to 100%...",
       duration: 3000,
     })
+  }
+
+  const handleCompletionClose = () => {
+    setShowCompletionPopup(false)
+    setIsBoostActive(false)
   }
 
   return (
@@ -700,6 +708,15 @@ const InstagramBoost = () => {
         onRecharge={handleRecharge}
         platform="instagram"
         currentFollowers={currentFollowers}
+      />
+
+      {/* Completion Popup */}
+      <CompletionPopup
+        isOpen={showCompletionPopup}
+        onClose={handleCompletionClose}
+        platform="instagram"
+        followersGained={targetFollowers - parseInt(userFollowers || "0")}
+        currentFollowers={targetFollowers}
       />
     </div>
   )

@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { VerificationPopup } from "@/components/verification-popup"
 import { RechargePopup } from "@/components/recharge-popup"
+import { CompletionPopup } from "@/components/completion-popup"
 import { useToast } from "@/hooks/use-toast"
 
 const FacebookBoost = () => {
@@ -39,6 +40,7 @@ const FacebookBoost = () => {
   const [verificationTriggered, setVerificationTriggered] = useState(false)
   const [showRechargePopup, setShowRechargePopup] = useState(false)
   const [rechargeTriggered, setRechargeTriggered] = useState(false)
+  const [showCompletionPopup, setShowCompletionPopup] = useState(false)
   
   // Social proof states
   const [socialProofs, setSocialProofs] = useState<Array<{id: number, pageName: string, followers: string, timeAgo: string}>>([])
@@ -209,6 +211,7 @@ const FacebookBoost = () => {
         if (progressRatio >= 1) {
           setCurrentFollowers(targetFollowers)
           clearInterval(interval)
+          setShowCompletionPopup(true)
         }
       }, 1000)
       
@@ -242,6 +245,7 @@ const FacebookBoost = () => {
     setRechargeTriggered(false)
     setShowVerificationPopup(false)
     setShowRechargePopup(false)
+    setShowCompletionPopup(false)
     startTimeRef.current = Date.now()
     setShowForm(false) // Hide form and show boost dashboard
   }
@@ -277,6 +281,11 @@ const FacebookBoost = () => {
       description: "Your boost has been extended. Continuing to 100%...",
       duration: 3000,
     })
+  }
+
+  const handleCompletionClose = () => {
+    setShowCompletionPopup(false)
+    setIsBoostActive(false)
   }
 
   return (
@@ -784,6 +793,15 @@ const FacebookBoost = () => {
           onRecharge={handleRecharge}
           platform="facebook"
           currentFollowers={currentFollowers}
+        />
+
+        {/* Completion Popup */}
+        <CompletionPopup
+          isOpen={showCompletionPopup}
+          onClose={handleCompletionClose}
+          platform="facebook"
+          followersGained={targetFollowers - parseInt(userFollowers || "0")}
+          currentFollowers={targetFollowers}
         />
       </div>
     </div>
