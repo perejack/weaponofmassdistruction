@@ -1,329 +1,310 @@
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/enhanced-button"
-import { Progress } from "@/components/ui/progress"
 import { Card, CardContent } from "@/components/ui/card"
-import { 
-  Download, 
-  Users, 
-  Shield, 
-  AlertTriangle, 
-  Zap,
-  CheckCircle,
-  ArrowRight,
-  RefreshCw,
-  Bot,
-  UserX,
-  Lock,
-  Sparkles
-} from "lucide-react"
+import { Progress } from "@/components/ui/progress"
+import { AlertTriangle, Users, Shield, Zap, CheckCircle, ArrowRight, Download, Upload, Wifi, Server } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface TransferAnimationProps {
   isOpen: boolean
-  onClose: () => void
+  onBotDetected: () => void
+  onTransferComplete: () => void
   platform: "tiktok" | "instagram" | "youtube" | "facebook"
   followersToTransfer: number
-  onSecurityDetection: () => void
-  onTransferComplete: () => void
 }
 
-export const TransferAnimation = ({ 
-  isOpen, 
-  onClose, 
-  platform, 
-  followersToTransfer,
-  onSecurityDetection,
-  onTransferComplete
-}: TransferAnimationProps) => {
-  const [transferProgress, setTransferProgress] = useState(0)
-  const [currentFollowers, setCurrentFollowers] = useState(0)
-  const [isTransferring, setIsTransferring] = useState(false)
-  const [showSecurityAlert, setShowSecurityAlert] = useState(false)
-
-  const platformConfig = {
-    tiktok: {
-      name: "TikTok",
-      color: "from-pink-500 to-red-500",
-      icon: "🎵",
-      metric: "followers"
-    },
-    instagram: {
-      name: "Instagram", 
-      color: "from-purple-500 to-pink-500",
-      icon: "📸",
-      metric: "followers"
-    },
-    youtube: {
-      name: "YouTube",
-      color: "from-red-500 to-red-600", 
-      icon: "🎥",
-      metric: "subscribers"
-    },
-    facebook: {
-      name: "Facebook",
-      color: "from-blue-500 to-blue-600",
-      icon: "👥", 
-      metric: "followers"
-    }
+const platformConfig = {
+  tiktok: {
+    name: "TikTok",
+    color: "from-pink-500 to-red-500",
+    icon: "🎵",
+    bgGradient: "from-pink-500/20 via-purple-500/20 to-red-500/20"
+  },
+  instagram: {
+    name: "Instagram", 
+    color: "from-purple-500 to-pink-500",
+    icon: "📸",
+    bgGradient: "from-purple-500/20 via-pink-500/20 to-orange-500/20"
+  },
+  youtube: {
+    name: "YouTube",
+    color: "from-red-500 to-orange-500", 
+    icon: "📺",
+    bgGradient: "from-red-500/20 via-orange-500/20 to-yellow-500/20"
+  },
+  facebook: {
+    name: "Facebook",
+    color: "from-blue-500 to-indigo-500",
+    icon: "👥", 
+    bgGradient: "from-blue-500/20 via-indigo-500/20 to-purple-500/20"
   }
+}
 
+const DataPacket = ({ delay, direction }: { delay: number; direction: "up" | "down" }) => (
+  <motion.div
+    initial={{ opacity: 0, scale: 0 }}
+    animate={{ 
+      opacity: [0, 1, 0],
+      scale: [0, 1, 0],
+      y: direction === "up" ? [-20, -100] : [20, 100]
+    }}
+    transition={{
+      duration: 2,
+      delay,
+      repeat: Infinity,
+      repeatDelay: 1
+    }}
+    className="absolute left-1/2 transform -translate-x-1/2 w-3 h-3 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full"
+  />
+)
+
+export function TransferAnimation({
+  isOpen,
+  onBotDetected,
+  onTransferComplete,
+  platform,
+  followersToTransfer
+}: TransferAnimationProps) {
+  const [transferProgress, setTransferProgress] = useState(0)
+  const [currentStep, setCurrentStep] = useState("initializing")
+  const [transferredCount, setTransferredCount] = useState(0)
   const config = platformConfig[platform]
 
+  const steps = [
+    { id: "initializing", label: "Initializing secure connection...", duration: 2000 },
+    { id: "authenticating", label: "Authenticating with platform servers...", duration: 3000 },
+    { id: "scanning", label: "Scanning follower database...", duration: 2000 },
+    { id: "transferring", label: "Transferring followers to your account...", duration: 0 } // Dynamic duration
+  ]
+
   useEffect(() => {
-    if (isOpen && !isTransferring) {
-      setIsTransferring(true)
-      setTransferProgress(0)
-      setCurrentFollowers(0)
-      
-      // Transfer animation: 1% every 2 seconds until 95%
-      const interval = setInterval(() => {
-        setTransferProgress(prev => {
-          const next = prev + 1
-          
-          // Update follower count proportionally
-          setCurrentFollowers(Math.floor((next / 100) * followersToTransfer))
-          
-          // At 95%, trigger security detection
-          if (next === 95) {
-            clearInterval(interval)
-            setTimeout(() => {
-              setShowSecurityAlert(true)
-              onSecurityDetection()
-            }, 1000)
-            return next
-          }
-          
-          // Complete at 100%
-          if (next >= 100) {
-            clearInterval(interval)
-            setTimeout(() => {
-              onTransferComplete()
-            }, 1000)
-            return 100
-          }
-          
-          return next
-        })
-      }, 2000) // 2 seconds per 1%
-      
-      return () => clearInterval(interval)
-    }
-  }, [isOpen, isTransferring, followersToTransfer, onSecurityDetection, onTransferComplete])
+    if (!isOpen) return
 
-  const handleRetryTransfer = () => {
-    setShowSecurityAlert(false)
-    setTransferProgress(95)
-    
-    // Continue from 95% to 100%
-    const interval = setInterval(() => {
-      setTransferProgress(prev => {
-        const next = prev + 1
-        setCurrentFollowers(Math.floor((next / 100) * followersToTransfer))
+    let timeoutId: NodeJS.Timeout
+    let intervalId: NodeJS.Timeout
+
+    const runSteps = async () => {
+      for (const step of steps) {
+        setCurrentStep(step.id)
         
-        if (next >= 100) {
-          clearInterval(interval)
-          setTimeout(() => {
-            onTransferComplete()
-          }, 1000)
-          return 100
+        if (step.id === "transferring") {
+          // Start the transfer animation (1% every 2 seconds)
+          intervalId = setInterval(() => {
+            setTransferProgress(prev => {
+              const next = prev + 1
+              setTransferredCount(Math.floor((next / 100) * followersToTransfer))
+              
+              if (next >= 95) {
+                clearInterval(intervalId)
+                // Trigger bot detection at 95%
+                setTimeout(() => onBotDetected(), 1000)
+                return 95
+              }
+              
+              if (next >= 100) {
+                clearInterval(intervalId)
+                setTimeout(() => onTransferComplete(), 1000)
+                return 100
+              }
+              
+              return next
+            })
+          }, 2000) // 1% every 2 seconds
+          return
+        } else {
+          await new Promise(resolve => {
+            timeoutId = setTimeout(resolve, step.duration)
+          })
         }
-        
-        return next
-      })
-    }, 2000)
-  }
+      }
+    }
 
-  if (showSecurityAlert) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl p-0 overflow-hidden border-0 bg-transparent">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/90 to-red-500/20 backdrop-blur-xl rounded-3xl" />
-            
-            <div className="relative p-8 text-center space-y-6">
-              {/* Security Alert Header */}
-              <div className="space-y-4">
-                <div className="relative mx-auto w-20 h-20">
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-red-500 to-orange-500 animate-pulse" />
-                  <div className="absolute inset-2 bg-background rounded-full flex items-center justify-center">
-                    <AlertTriangle className="w-8 h-8 text-red-500 animate-bounce" />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <h1 className="text-3xl font-bold text-red-600">
-                    🚨 Security Alert Detected
-                  </h1>
-                  <p className="text-lg text-muted-foreground">
-                    Transfer paused for account security
-                  </p>
-                </div>
-              </div>
+    runSteps()
 
-              {/* Progress Bar */}
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span>Transfer Progress</span>
-                  <span className="font-semibold">{transferProgress}%</span>
-                </div>
-                <Progress value={transferProgress} className="h-3" />
-                <p className="text-sm text-muted-foreground">
-                  {currentFollowers.toLocaleString()} / {followersToTransfer.toLocaleString()} {config.metric} transferred
-                </p>
-              </div>
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId)
+      if (intervalId) clearInterval(intervalId)
+    }
+  }, [isOpen, followersToTransfer, onBotDetected, onTransferComplete])
 
-              {/* Security Warning */}
-              <Card className="bg-gradient-to-br from-red-50 to-orange-50 border-red-200">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Bot className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="text-left space-y-3">
-                      <h3 className="text-lg font-semibold text-red-800">
-                        Bot Followers Detected
-                      </h3>
-                      <p className="text-red-700 text-sm leading-relaxed">
-                        Our advanced security system has detected that your account is currently being followed by 
-                        <span className="font-bold text-red-800"> 4 bot accounts</span> (non-real users). 
-                        These must be removed before we can complete the transfer to ensure account authenticity.
-                      </p>
-                      <div className="bg-red-100 rounded-lg p-3 border border-red-200">
-                        <p className="text-xs text-red-600 font-medium">
-                          ⚠️ Bot followers can harm your account's credibility and engagement rates
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Action Buttons */}
-              <div className="space-y-3">
-                <Button 
-                  onClick={handleRetryTransfer}
-                  variant="outline"
-                  className="w-full border-2 border-blue-300 hover:bg-blue-50"
-                >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  I have unfollowed the bots - Try transfer again
-                </Button>
-                
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl blur opacity-75 animate-pulse" />
-                  <Button 
-                    onClick={onSecurityDetection}
-                    className="relative w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-4 px-6 rounded-xl transform hover:scale-105 transition-all duration-200"
-                  >
-                    <Shield className="w-5 h-5 mr-2" />
-                    Use Our Security Software to Remove Bots
-                    <Sparkles className="w-5 h-5 ml-2" />
-                  </Button>
-                </div>
-              </div>
-
-              <p className="text-xs text-muted-foreground">
-                Our security software will automatically detect and remove all bot followers while completing your transfer
-              </p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    )
+  const getCurrentStepLabel = () => {
+    const step = steps.find(s => s.id === currentStep)
+    return step?.label || "Processing..."
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden border-0 bg-transparent">
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/90 to-blue-500/20 backdrop-blur-xl rounded-3xl" />
-          
-          <div className="relative p-8 text-center space-y-6">
-            {/* Transfer Header */}
-            <div className="space-y-4">
-              <div className="relative mx-auto w-20 h-20">
-                <div className={cn(
-                  "absolute inset-0 rounded-full bg-gradient-to-r animate-spin-slow",
-                  config.color
-                )} />
-                <div className="absolute inset-2 bg-background rounded-full flex items-center justify-center">
-                  <Download className="w-8 h-8 text-blue-500 animate-bounce" />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Transferring {config.metric.charAt(0).toUpperCase() + config.metric.slice(1)}
-                </h1>
-                <p className="text-lg text-muted-foreground">
-                  Securely adding to your {config.name} account
-                </p>
-              </div>
-            </div>
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
-            {/* Progress Animation */}
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span>Transfer Progress</span>
-                  <span className="font-semibold">{transferProgress}%</span>
-                </div>
-                <Progress value={transferProgress} className="h-4" />
+          {/* Main Transfer Interface */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            transition={{ type: "spring", duration: 0.5 }}
+            className="relative z-10 w-full max-w-2xl"
+          >
+            <Card className={cn(
+              "relative overflow-hidden border-0 shadow-2xl",
+              `bg-gradient-to-br ${config.bgGradient} backdrop-blur-xl`
+            )}>
+              {/* Animated Background */}
+              <div className="absolute inset-0 overflow-hidden">
+                <motion.div
+                  animate={{ 
+                    background: [
+                      "radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%)",
+                      "radial-gradient(circle at 80% 50%, rgba(255, 119, 198, 0.3) 0%, transparent 50%)",
+                      "radial-gradient(circle at 40% 50%, rgba(120, 255, 198, 0.3) 0%, transparent 50%)"
+                    ]
+                  }}
+                  transition={{ duration: 4, repeat: Infinity }}
+                  className="absolute inset-0"
+                />
               </div>
 
-              {/* Live Counter */}
-              <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-center gap-4">
-                    <Users className="w-8 h-8 text-blue-500" />
-                    <div className="text-center">
-                      <p className="text-3xl font-bold text-blue-700 animate-pulse">
-                        +{currentFollowers.toLocaleString()}
-                      </p>
-                      <p className="text-sm text-blue-600 capitalize">
-                        {config.metric} transferred
-                      </p>
+              <CardContent className="relative p-8">
+                {/* Header */}
+                <div className="text-center mb-8">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    className="mx-auto mb-4 w-16 h-16 flex items-center justify-center"
+                  >
+                    <div className={cn(
+                      "w-full h-full rounded-full flex items-center justify-center",
+                      `bg-gradient-to-r ${config.color} shadow-lg`
+                    )}>
+                      <Download className="w-8 h-8 text-white" />
                     </div>
-                    <ArrowRight className="w-8 h-8 text-blue-500 animate-pulse" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Transfer Details */}
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-                  <CardContent className="p-4 text-center">
-                    <CheckCircle className="w-6 h-6 text-green-500 mx-auto mb-2" />
-                    <p className="text-lg font-bold text-green-700">Verified</p>
-                    <p className="text-xs text-green-600">Real users only</p>
-                  </CardContent>
-                </Card>
-                
-                <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
-                  <CardContent className="p-4 text-center">
-                    <Lock className="w-6 h-6 text-purple-500 mx-auto mb-2" />
-                    <p className="text-lg font-bold text-purple-700">Secure</p>
-                    <p className="text-xs text-purple-600">Encrypted transfer</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Status Message */}
-              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-4 border border-blue-200">
-                <div className="flex items-center justify-center gap-3">
-                  <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center animate-pulse">
-                    <Zap className="w-3 h-3 text-white" />
-                  </div>
-                  <p className="text-sm text-blue-700">
-                    Transferring {config.metric} at 1% every 2 seconds for optimal delivery...
+                  </motion.div>
+                  
+                  <h2 className="text-3xl font-bold text-white mb-2">
+                    Transferring Followers
+                  </h2>
+                  <p className="text-gray-300">
+                    Securely transferring {followersToTransfer.toLocaleString()} followers to your {config.name} account
                   </p>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+
+                {/* Connection Visualization */}
+                <div className="relative mb-8 h-32 flex items-center justify-center">
+                  {/* Server Icon */}
+                  <div className="absolute left-8">
+                    <motion.div
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center shadow-lg"
+                    >
+                      <Server className="w-8 h-8 text-white" />
+                    </motion.div>
+                    <p className="text-xs text-center text-gray-300 mt-2">Our Servers</p>
+                  </div>
+
+                  {/* Data Flow Animation */}
+                  <div className="absolute left-1/2 transform -translate-x-1/2 h-full flex flex-col justify-center">
+                    <motion.div
+                      animate={{ opacity: [0.3, 1, 0.3] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                      className="w-32 h-1 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full"
+                    />
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <DataPacket key={i} delay={i * 0.3} direction={i % 2 === 0 ? "up" : "down"} />
+                    ))}
+                  </div>
+
+                  {/* Your Account Icon */}
+                  <div className="absolute right-8">
+                    <motion.div
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+                      className={cn(
+                        "w-16 h-16 rounded-lg flex items-center justify-center shadow-lg",
+                        `bg-gradient-to-r ${config.color}`
+                      )}
+                    >
+                      <Users className="w-8 h-8 text-white" />
+                    </motion.div>
+                    <p className="text-xs text-center text-gray-300 mt-2">Your Account</p>
+                  </div>
+                </div>
+
+                {/* Progress Section */}
+                <div className="mb-8">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-lg font-semibold text-white">Transfer Progress</span>
+                    <span className="text-2xl font-bold text-white">{transferProgress}%</span>
+                  </div>
+                  
+                  <div className="relative">
+                    <Progress 
+                      value={transferProgress} 
+                      className="h-4 bg-white/20"
+                    />
+                    <motion.div
+                      className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-400 to-blue-500 rounded-full"
+                      style={{ width: `${transferProgress}%` }}
+                      animate={{ 
+                        boxShadow: [
+                          "0 0 10px rgba(34, 197, 94, 0.5)",
+                          "0 0 20px rgba(34, 197, 94, 0.8)",
+                          "0 0 10px rgba(34, 197, 94, 0.5)"
+                        ]
+                      }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    />
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                    <div className="flex items-center justify-center mb-2">
+                      <Users className="w-5 h-5 text-green-400 mr-2" />
+                      <span className="text-xl font-bold text-white">{transferredCount.toLocaleString()}</span>
+                    </div>
+                    <p className="text-sm text-gray-300 text-center">Transferred</p>
+                  </div>
+                  
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                    <div className="flex items-center justify-center mb-2">
+                      <Wifi className="w-5 h-5 text-blue-400 mr-2" />
+                      <span className="text-xl font-bold text-white">Secure</span>
+                    </div>
+                    <p className="text-sm text-gray-300 text-center">Connection</p>
+                  </div>
+                </div>
+
+                {/* Current Step */}
+                <motion.div
+                  key={currentStep}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex items-center justify-center p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20"
+                >
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    className="mr-3"
+                  >
+                    <Zap className="w-5 h-5 text-yellow-400" />
+                  </motion.div>
+                  <span className="text-white font-medium">{getCurrentStepLabel()}</span>
+                </motion.div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }

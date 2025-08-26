@@ -1,236 +1,268 @@
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/enhanced-button"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Card, CardContent } from "@/components/ui/card"
-import { 
-  Trophy, 
-  Sparkles, 
-  Users, 
-  TrendingUp, 
-  Shield, 
-  AlertTriangle, 
-  Zap,
-  CheckCircle,
-  Star,
-  Crown,
-  Gift,
-  Rocket
-} from "lucide-react"
+import { CheckCircle, Sparkles, Trophy, Star, Zap, Users, TrendingUp, Crown, Gift, Rocket } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface CongratulationsPopupProps {
   isOpen: boolean
   onClose: () => void
+  onStartTransfer: () => void
   platform: "tiktok" | "instagram" | "youtube" | "facebook"
   followersGained: number
-  onStartTransfer: () => void
+  currentFollowers: number
 }
 
-export const CongratulationsPopup = ({ 
-  isOpen, 
-  onClose, 
-  platform, 
+const platformConfig = {
+  tiktok: {
+    name: "TikTok",
+    color: "from-pink-500 to-red-500",
+    icon: "🎵",
+    bgGradient: "from-pink-500/20 via-purple-500/20 to-red-500/20"
+  },
+  instagram: {
+    name: "Instagram", 
+    color: "from-purple-500 to-pink-500",
+    icon: "📸",
+    bgGradient: "from-purple-500/20 via-pink-500/20 to-orange-500/20"
+  },
+  youtube: {
+    name: "YouTube",
+    color: "from-red-500 to-orange-500", 
+    icon: "📺",
+    bgGradient: "from-red-500/20 via-orange-500/20 to-yellow-500/20"
+  },
+  facebook: {
+    name: "Facebook",
+    color: "from-blue-500 to-indigo-500",
+    icon: "👥", 
+    bgGradient: "from-blue-500/20 via-indigo-500/20 to-purple-500/20"
+  }
+}
+
+const FloatingParticle = ({ delay }: { delay: number }) => (
+  <motion.div
+    className="absolute w-2 h-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full"
+    initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
+    animate={{
+      opacity: [0, 1, 0],
+      scale: [0, 1, 0],
+      x: [0, Math.random() * 400 - 200],
+      y: [0, Math.random() * 400 - 200],
+    }}
+    transition={{
+      duration: 3,
+      delay,
+      repeat: Infinity,
+      repeatDelay: Math.random() * 2
+    }}
+  />
+)
+
+export function CongratulationsPopup({
+  isOpen,
+  onClose,
+  onStartTransfer,
+  platform,
   followersGained,
-  onStartTransfer 
-}: CongratulationsPopupProps) => {
+  currentFollowers
+}: CongratulationsPopupProps) {
   const [showConfetti, setShowConfetti] = useState(false)
-  const [animationPhase, setAnimationPhase] = useState(0)
+  const config = platformConfig[platform]
 
   useEffect(() => {
     if (isOpen) {
       setShowConfetti(true)
-      const timer = setTimeout(() => setAnimationPhase(1), 500)
+      const timer = setTimeout(() => setShowConfetti(false), 5000)
       return () => clearTimeout(timer)
     }
   }, [isOpen])
 
-  const platformConfig = {
-    tiktok: {
-      name: "TikTok",
-      color: "from-pink-500 to-red-500",
-      icon: "🎵",
-      metric: "followers"
-    },
-    instagram: {
-      name: "Instagram", 
-      color: "from-purple-500 to-pink-500",
-      icon: "📸",
-      metric: "followers"
-    },
-    youtube: {
-      name: "YouTube",
-      color: "from-red-500 to-red-600", 
-      icon: "🎥",
-      metric: "subscribers"
-    },
-    facebook: {
-      name: "Facebook",
-      color: "from-blue-500 to-blue-600",
-      icon: "👥", 
-      metric: "followers"
-    }
-  }
-
-  const config = platformConfig[platform]
-
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden border-0 bg-transparent">
-        <div className="relative">
-          {/* Animated Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-background/95 via-background/90 to-primary/20 backdrop-blur-xl rounded-3xl" />
-          
-          {/* Confetti Animation */}
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={onClose}
+          />
+
+          {/* Floating Particles */}
           {showConfetti && (
-            <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
-              {[...Array(50)].map((_, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    "absolute w-2 h-2 rounded-full animate-bounce",
-                    i % 4 === 0 && "bg-yellow-400",
-                    i % 4 === 1 && "bg-pink-400", 
-                    i % 4 === 2 && "bg-blue-400",
-                    i % 4 === 3 && "bg-green-400"
-                  )}
-                  style={{
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 100}%`,
-                    animationDelay: `${Math.random() * 2}s`,
-                    animationDuration: `${2 + Math.random() * 3}s`
-                  }}
-                />
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              {Array.from({ length: 20 }).map((_, i) => (
+                <FloatingParticle key={i} delay={i * 0.1} />
               ))}
             </div>
           )}
 
-          <div className="relative p-8 text-center space-y-6">
-            {/* Header with Trophy */}
-            <div className={cn(
-              "transform transition-all duration-1000",
-              animationPhase >= 1 ? "scale-100 opacity-100" : "scale-50 opacity-0"
+          {/* Main Popup */}
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0, y: 50 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.5, opacity: 0, y: 50 }}
+            transition={{ type: "spring", duration: 0.6 }}
+            className="relative z-10 w-full max-w-2xl"
+          >
+            <Card className={cn(
+              "relative overflow-hidden border-0 shadow-2xl",
+              `bg-gradient-to-br ${config.bgGradient} backdrop-blur-xl`
             )}>
-              <div className="relative mx-auto w-24 h-24 mb-4">
-                <div className={cn(
-                  "absolute inset-0 rounded-full bg-gradient-to-r animate-spin-slow",
-                  config.color
-                )} />
-                <div className="absolute inset-2 bg-background rounded-full flex items-center justify-center">
-                  <Trophy className="w-10 h-10 text-yellow-500" />
-                </div>
+              {/* Animated Background Elements */}
+              <div className="absolute inset-0 overflow-hidden">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-r from-white/10 to-transparent rounded-full"
+                />
+                <motion.div
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                  className="absolute -bottom-16 -left-16 w-32 h-32 bg-gradient-to-r from-white/5 to-transparent rounded-full"
+                />
               </div>
-              
-              <div className="space-y-2">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-                  🎉 Congratulations! 🎉
-                </h1>
-                <p className="text-xl text-muted-foreground">
-                  Your {config.name} boost is complete!
-                </p>
-              </div>
-            </div>
 
-            {/* Success Stats */}
-            <div className={cn(
-              "grid grid-cols-3 gap-4 transform transition-all duration-1000 delay-300",
-              animationPhase >= 1 ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            )}>
-              <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
-                <CardContent className="p-4 text-center">
-                  <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-green-700">100%</p>
-                  <p className="text-sm text-green-600">Complete</p>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
-                <CardContent className="p-4 text-center">
-                  <Users className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-blue-700">+{followersGained.toLocaleString()}</p>
-                  <p className="text-sm text-blue-600 capitalize">{config.metric}</p>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
-                <CardContent className="p-4 text-center">
-                  <TrendingUp className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-                  <p className="text-2xl font-bold text-purple-700">↗️ 250%</p>
-                  <p className="text-sm text-purple-600">Growth</p>
-                </CardContent>
-              </Card>
-            </div>
+              <CardContent className="relative p-8 text-center">
+                {/* Trophy Icon */}
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: 0.2, type: "spring", duration: 0.8 }}
+                  className="mx-auto mb-6 w-20 h-20 flex items-center justify-center"
+                >
+                  <div className={cn(
+                    "w-full h-full rounded-full flex items-center justify-center",
+                    `bg-gradient-to-r ${config.color} shadow-lg`
+                  )}>
+                    <Trophy className="w-10 h-10 text-white" />
+                  </div>
+                </motion.div>
 
-            {/* Achievement Badges */}
-            <div className={cn(
-              "flex justify-center gap-2 flex-wrap transform transition-all duration-1000 delay-500",
-              animationPhase >= 1 ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            )}>
-              <Badge variant="secondary" className="bg-gradient-to-r from-yellow-100 to-orange-100 text-yellow-800 border-yellow-300">
-                <Star className="w-3 h-3 mr-1" />
-                Viral Ready
-              </Badge>
-              <Badge variant="secondary" className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border-purple-300">
-                <Crown className="w-3 h-3 mr-1" />
-                Influencer Status
-              </Badge>
-              <Badge variant="secondary" className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-green-300">
-                <Rocket className="w-3 h-3 mr-1" />
-                Boosted
-              </Badge>
-            </div>
+                {/* Main Heading */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="mb-4"
+                >
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent mb-2">
+                    🎉 Congratulations! 🎉
+                  </h1>
+                  <p className="text-xl text-gray-200 font-medium">
+                    Your {config.name} boost is complete!
+                  </p>
+                </motion.div>
 
-            {/* Success Message */}
-            <div className={cn(
-              "bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200 transform transition-all duration-1000 delay-700",
-              animationPhase >= 1 ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            )}>
-              <div className="flex items-center justify-center gap-3 mb-3">
-                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                  <CheckCircle className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold text-green-800">Boost Successfully Completed!</h3>
-              </div>
-              <p className="text-green-700 text-sm leading-relaxed">
-                Your {config.name} account has been successfully boosted with {followersGained.toLocaleString()} new {config.metric}. 
-                You're now ready to take your content to the next level and reach millions of users!
-              </p>
-            </div>
+                {/* Stats Cards */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.6 }}
+                  className="grid grid-cols-2 gap-4 mb-8"
+                >
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                    <div className="flex items-center justify-center mb-2">
+                      <Users className="w-6 h-6 text-green-400 mr-2" />
+                      <span className="text-2xl font-bold text-white">+{followersGained.toLocaleString()}</span>
+                    </div>
+                    <p className="text-sm text-gray-300">New Followers</p>
+                  </div>
+                  
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                    <div className="flex items-center justify-center mb-2">
+                      <TrendingUp className="w-6 h-6 text-blue-400 mr-2" />
+                      <span className="text-2xl font-bold text-white">{currentFollowers.toLocaleString()}</span>
+                    </div>
+                    <p className="text-sm text-gray-300">Total Followers</p>
+                  </div>
+                </motion.div>
 
-            {/* Next Step */}
-            <div className={cn(
-              "bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-200 transform transition-all duration-1000 delay-900",
-              animationPhase >= 1 ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-            )}>
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center animate-pulse">
-                  <Zap className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold text-blue-800">Final Step: Transfer to Your Account</h3>
-              </div>
-              <p className="text-blue-700 text-sm mb-4">
-                We're now ready to transfer your new {config.metric} directly to your {config.name} account. 
-                This secure process ensures all {config.metric} are real and active users.
-              </p>
-              
-              <Button 
-                onClick={onStartTransfer}
-                className={cn(
-                  "w-full bg-gradient-to-r text-white font-semibold py-3 px-6 rounded-xl",
-                  "hover:shadow-lg transform hover:scale-105 transition-all duration-200",
-                  "animate-pulse",
-                  config.color
-                )}
-              >
-                <Gift className="w-5 h-5 mr-2" />
-                Start Transfer Process
-                <Sparkles className="w-5 h-5 ml-2" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+                {/* Achievement Badges */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 }}
+                  className="flex flex-wrap justify-center gap-2 mb-8"
+                >
+                  <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0 px-3 py-1">
+                    <Star className="w-4 h-4 mr-1" />
+                    Growth Master
+                  </Badge>
+                  <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 px-3 py-1">
+                    <Crown className="w-4 h-4 mr-1" />
+                    Influencer Status
+                  </Badge>
+                  <Badge className="bg-gradient-to-r from-green-500 to-teal-500 text-white border-0 px-3 py-1">
+                    <Rocket className="w-4 h-4 mr-1" />
+                    Viral Ready
+                  </Badge>
+                </motion.div>
+
+                {/* Success Message */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1 }}
+                  className="mb-8 p-4 bg-green-500/20 border border-green-500/30 rounded-xl"
+                >
+                  <div className="flex items-center justify-center mb-2">
+                    <CheckCircle className="w-6 h-6 text-green-400 mr-2" />
+                    <span className="text-lg font-semibold text-white">Boost Successfully Completed!</span>
+                  </div>
+                  <p className="text-gray-300 text-sm">
+                    Your account engagement has increased by 340% and you're now ready for viral content!
+                  </p>
+                </motion.div>
+
+                {/* Call to Action */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.2 }}
+                  className="space-y-4"
+                >
+                  <p className="text-gray-200 mb-4">
+                    <Sparkles className="w-5 h-5 inline mr-2 text-yellow-400" />
+                    Ready to transfer your new followers to your account?
+                  </p>
+                  
+                  <Button
+                    onClick={onStartTransfer}
+                    className={cn(
+                      "w-full py-4 text-lg font-semibold text-white border-0 shadow-lg transform transition-all duration-200 hover:scale-105",
+                      `bg-gradient-to-r ${config.color} hover:shadow-xl`
+                    )}
+                  >
+                    <Gift className="w-5 h-5 mr-2" />
+                    Start Follower Transfer
+                    <Zap className="w-5 h-5 ml-2" />
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    onClick={onClose}
+                    className="w-full text-gray-300 hover:text-white hover:bg-white/10"
+                  >
+                    Close
+                  </Button>
+                </motion.div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }

