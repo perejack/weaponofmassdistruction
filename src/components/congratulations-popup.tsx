@@ -114,7 +114,7 @@ export function CongratulationsPopup({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.5, opacity: 0, y: 50 }}
             transition={{ type: "spring", duration: 0.6 }}
-            className="relative z-10 w-full max-w-2xl"
+            className="relative z-10 w-full max-w-sm mx-2 sm:max-w-md"
           >
             <Card className={cn(
               "relative overflow-hidden border-0 shadow-2xl",
@@ -134,19 +134,19 @@ export function CongratulationsPopup({
                 />
               </div>
 
-              <CardContent className="relative p-8 text-center">
+              <CardContent className="relative p-4 sm:p-6 text-center">
                 {/* Trophy Icon */}
                 <motion.div
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ delay: 0.2, type: "spring", duration: 0.8 }}
-                  className="mx-auto mb-6 w-20 h-20 flex items-center justify-center"
+                  className="mx-auto mb-4 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center"
                 >
                   <div className={cn(
                     "w-full h-full rounded-full flex items-center justify-center",
                     `bg-gradient-to-r ${config.color} shadow-lg`
                   )}>
-                    <Trophy className="w-10 h-10 text-white" />
+                    <Trophy className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                   </div>
                 </motion.div>
 
@@ -157,10 +157,10 @@ export function CongratulationsPopup({
                   transition={{ delay: 0.4 }}
                   className="mb-4"
                 >
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent mb-2">
+                  <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent mb-2">
                     🎉 Congratulations! 🎉
                   </h1>
-                  <p className="text-xl text-gray-200 font-medium">
+                  <p className="text-lg sm:text-xl text-gray-200 font-medium">
                     Your {config.name} boost is complete!
                   </p>
                 </motion.div>
@@ -170,22 +170,22 @@ export function CongratulationsPopup({
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.6 }}
-                  className="grid grid-cols-2 gap-4 mb-8"
+                  className="grid grid-cols-2 gap-3 mb-6"
                 >
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="flex items-center justify-center mb-2">
-                      <Users className="w-6 h-6 text-green-400 mr-2" />
-                      <span className="text-2xl font-bold text-white">+{followersGained.toLocaleString()}</span>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                    <div className="flex items-center justify-center mb-1">
+                      <Users className="w-4 h-4 text-green-400 mr-1" />
+                      <span className="text-lg sm:text-xl font-bold text-white">+{followersGained.toLocaleString()}</span>
                     </div>
-                    <p className="text-sm text-gray-300">New Followers</p>
+                    <p className="text-xs text-gray-300">New Followers</p>
                   </div>
                   
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="flex items-center justify-center mb-2">
-                      <TrendingUp className="w-6 h-6 text-blue-400 mr-2" />
-                      <span className="text-2xl font-bold text-white">{currentFollowers.toLocaleString()}</span>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                    <div className="flex items-center justify-center mb-1">
+                      <TrendingUp className="w-4 h-4 text-blue-400 mr-1" />
+                      <span className="text-lg sm:text-xl font-bold text-white">{currentFollowers.toLocaleString()}</span>
                     </div>
-                    <p className="text-sm text-gray-300">Total Followers</p>
+                    <p className="text-xs text-gray-300">Total Followers</p>
                   </div>
                 </motion.div>
 
@@ -194,19 +194,15 @@ export function CongratulationsPopup({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.8 }}
-                  className="flex flex-wrap justify-center gap-2 mb-8"
+                  className="flex flex-wrap justify-center gap-2 mb-6"
                 >
-                  <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0 px-3 py-1">
-                    <Star className="w-4 h-4 mr-1" />
+                  <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0 px-2 py-1 text-xs">
+                    <Star className="w-3 h-3 mr-1" />
                     Growth Master
                   </Badge>
-                  <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 px-3 py-1">
-                    <Crown className="w-4 h-4 mr-1" />
+                  <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 px-2 py-1 text-xs">
+                    <Crown className="w-3 h-3 mr-1" />
                     Influencer Status
-                  </Badge>
-                  <Badge className="bg-gradient-to-r from-green-500 to-teal-500 text-white border-0 px-3 py-1">
-                    <Rocket className="w-4 h-4 mr-1" />
-                    Viral Ready
                   </Badge>
                 </motion.div>
 
@@ -215,14 +211,14 @@ export function CongratulationsPopup({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1 }}
-                  className="mb-8 p-4 bg-green-500/20 border border-green-500/30 rounded-xl"
+                  className="mb-6 p-3 bg-green-500/20 border border-green-500/30 rounded-lg"
                 >
                   <div className="flex items-center justify-center mb-2">
-                    <CheckCircle className="w-6 h-6 text-green-400 mr-2" />
-                    <span className="text-lg font-semibold text-white">Boost Successfully Completed!</span>
+                    <CheckCircle className="w-5 h-5 text-green-400 mr-2" />
+                    <span className="text-base font-semibold text-white">Boost Complete!</span>
                   </div>
-                  <p className="text-gray-300 text-sm">
-                    Your account engagement has increased by 340% and you're now ready for viral content!
+                  <p className="text-gray-300 text-xs">
+                    Engagement increased by 340%!
                   </p>
                 </motion.div>
 
@@ -233,21 +229,21 @@ export function CongratulationsPopup({
                   transition={{ delay: 1.2 }}
                   className="space-y-4"
                 >
-                  <p className="text-gray-200 mb-4">
-                    <Sparkles className="w-5 h-5 inline mr-2 text-yellow-400" />
-                    Ready to transfer your new followers to your account?
+                  <p className="text-gray-200 mb-4 text-sm">
+                    <Sparkles className="w-4 h-4 inline mr-2 text-yellow-400" />
+                    Ready to transfer followers?
                   </p>
                   
                   <Button
                     onClick={onStartTransfer}
                     className={cn(
-                      "w-full py-4 text-lg font-semibold text-white border-0 shadow-lg transform transition-all duration-200 hover:scale-105",
+                      "w-full py-3 text-base font-semibold text-white border-0 shadow-lg transform transition-all duration-200 hover:scale-105",
                       `bg-gradient-to-r ${config.color} hover:shadow-xl`
                     )}
                   >
-                    <Gift className="w-5 h-5 mr-2" />
-                    Start Follower Transfer
-                    <Zap className="w-5 h-5 ml-2" />
+                    <Gift className="w-4 h-4 mr-2" />
+                    Start Transfer
+                    <Zap className="w-4 h-4 ml-2" />
                   </Button>
 
                   <Button

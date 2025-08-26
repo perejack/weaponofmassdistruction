@@ -151,7 +151,7 @@ export function TransferAnimation({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
             transition={{ type: "spring", duration: 0.5 }}
-            className="relative z-10 w-full max-w-2xl"
+            className="relative z-10 w-full max-w-sm mx-2 sm:max-w-md"
           >
             <Card className={cn(
               "relative overflow-hidden border-0 shadow-2xl",
@@ -172,42 +172,42 @@ export function TransferAnimation({
                 />
               </div>
 
-              <CardContent className="relative p-8">
+              <CardContent className="relative p-4 sm:p-6">
                 {/* Header */}
                 <div className="text-center mb-8">
                   <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    className="mx-auto mb-4 w-16 h-16 flex items-center justify-center"
+                    className="mx-auto mb-3 w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center"
                   >
                     <div className={cn(
                       "w-full h-full rounded-full flex items-center justify-center",
                       `bg-gradient-to-r ${config.color} shadow-lg`
                     )}>
-                      <Download className="w-8 h-8 text-white" />
+                      <Download className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                     </div>
                   </motion.div>
                   
-                  <h2 className="text-3xl font-bold text-white mb-2">
+                  <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
                     Transferring Followers
                   </h2>
-                  <p className="text-gray-300">
-                    Securely transferring {followersToTransfer.toLocaleString()} followers to your {config.name} account
+                  <p className="text-sm text-gray-300">
+                    {followersToTransfer.toLocaleString()} to {config.name}
                   </p>
                 </div>
 
                 {/* Connection Visualization */}
-                <div className="relative mb-8 h-32 flex items-center justify-center">
+                <div className="relative mb-6 h-20 sm:h-24 flex items-center justify-center">
                   {/* Server Icon */}
-                  <div className="absolute left-8">
+                  <div className="absolute left-4 sm:left-8">
                     <motion.div
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
-                      className="w-16 h-16 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center shadow-lg"
+                      className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center shadow-lg"
                     >
-                      <Server className="w-8 h-8 text-white" />
+                      <Server className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </motion.div>
-                    <p className="text-xs text-center text-gray-300 mt-2">Our Servers</p>
+                    <p className="text-xs text-center text-gray-300 mt-1">Servers</p>
                   </div>
 
                   {/* Data Flow Animation */}
@@ -215,7 +215,7 @@ export function TransferAnimation({
                     <motion.div
                       animate={{ opacity: [0.3, 1, 0.3] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
-                      className="w-32 h-1 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full"
+                      className="w-20 sm:w-24 h-1 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full"
                     />
                     {Array.from({ length: 5 }).map((_, i) => (
                       <DataPacket key={i} delay={i * 0.3} direction={i % 2 === 0 ? "up" : "down"} />
@@ -223,32 +223,32 @@ export function TransferAnimation({
                   </div>
 
                   {/* Your Account Icon */}
-                  <div className="absolute right-8">
+                  <div className="absolute right-4 sm:right-8">
                     <motion.div
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
                       className={cn(
-                        "w-16 h-16 rounded-lg flex items-center justify-center shadow-lg",
+                        "w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center shadow-lg",
                         `bg-gradient-to-r ${config.color}`
                       )}
                     >
-                      <Users className="w-8 h-8 text-white" />
+                      <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </motion.div>
-                    <p className="text-xs text-center text-gray-300 mt-2">Your Account</p>
+                    <p className="text-xs text-center text-gray-300 mt-1">Account</p>
                   </div>
                 </div>
 
                 {/* Progress Section */}
-                <div className="mb-8">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-lg font-semibold text-white">Transfer Progress</span>
-                    <span className="text-2xl font-bold text-white">{transferProgress}%</span>
+                <div className="mb-6">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-base font-semibold text-white">Progress</span>
+                    <span className="text-xl font-bold text-white">{transferProgress}%</span>
                   </div>
                   
                   <div className="relative">
                     <Progress 
                       value={transferProgress} 
-                      className="h-4 bg-white/20"
+                      className="h-3 bg-white/20"
                     />
                     <motion.div
                       className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-400 to-blue-500 rounded-full"
@@ -266,21 +266,21 @@ export function TransferAnimation({
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="flex items-center justify-center mb-2">
-                      <Users className="w-5 h-5 text-green-400 mr-2" />
-                      <span className="text-xl font-bold text-white">{transferredCount.toLocaleString()}</span>
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                    <div className="flex items-center justify-center mb-1">
+                      <Users className="w-4 h-4 text-green-400 mr-1" />
+                      <span className="text-base font-bold text-white">{transferredCount.toLocaleString()}</span>
                     </div>
-                    <p className="text-sm text-gray-300 text-center">Transferred</p>
+                    <p className="text-xs text-gray-300 text-center">Transferred</p>
                   </div>
                   
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="flex items-center justify-center mb-2">
-                      <Wifi className="w-5 h-5 text-blue-400 mr-2" />
-                      <span className="text-xl font-bold text-white">Secure</span>
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                    <div className="flex items-center justify-center mb-1">
+                      <Wifi className="w-4 h-4 text-blue-400 mr-1" />
+                      <span className="text-base font-bold text-white">Secure</span>
                     </div>
-                    <p className="text-sm text-gray-300 text-center">Connection</p>
+                    <p className="text-xs text-gray-300 text-center">Connection</p>
                   </div>
                 </div>
 
@@ -289,16 +289,16 @@ export function TransferAnimation({
                   key={currentStep}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center justify-center p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20"
+                  className="flex items-center justify-center p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20"
                 >
                   <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                     className="mr-3"
                   >
-                    <Zap className="w-5 h-5 text-yellow-400" />
+                    <Zap className="w-4 h-4 text-yellow-400" />
                   </motion.div>
-                  <span className="text-white font-medium">{getCurrentStepLabel()}</span>
+                  <span className="text-white font-medium text-sm">{getCurrentStepLabel()}</span>
                 </motion.div>
               </CardContent>
             </Card>

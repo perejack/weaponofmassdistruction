@@ -81,7 +81,7 @@ export function PaymentConfirmation({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.8, opacity: 0, y: 50 }}
             transition={{ type: "spring", duration: 0.6 }}
-            className="relative z-10 w-full max-w-lg"
+            className="relative z-10 w-full max-w-sm mx-2 sm:max-w-md"
           >
             <Card className="relative overflow-hidden border-0 shadow-2xl bg-gradient-to-br from-green-900/40 via-blue-900/40 to-purple-900/40 backdrop-blur-xl">
               {/* Animated Background */}
@@ -99,7 +99,7 @@ export function PaymentConfirmation({
                 />
               </div>
 
-              <CardContent className="relative p-8">
+              <CardContent className="relative p-4 sm:p-6">
                 {/* Header */}
                 <div className="text-center mb-8">
                   <motion.div
@@ -108,69 +108,65 @@ export function PaymentConfirmation({
                       rotate: [0, 5, -5, 0]
                     }}
                     transition={{ duration: 2, repeat: Infinity }}
-                    className="mx-auto mb-4 w-16 h-16 flex items-center justify-center"
+                    className="mx-auto mb-3 w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center"
                   >
                     <div className="w-full h-full rounded-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center shadow-lg">
-                      <CreditCard className="w-8 h-8 text-white" />
+                      <CreditCard className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                     </div>
                   </motion.div>
                   
-                  <h2 className="text-2xl font-bold text-white mb-2">
+                  <h2 className="text-xl font-bold text-white mb-2">
                     Confirm Payment
                   </h2>
-                  <p className="text-gray-300">
-                    Activate Premium Anti-Bot Security
+                  <p className="text-sm text-gray-300">
+                    Activate Premium Security
                   </p>
                 </div>
 
                 {/* Payment Details */}
-                <div className="mb-8 p-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-white font-medium">Service:</span>
-                    <span className="text-white">Premium Security Software</span>
+                <div className="mb-6 p-4 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-white text-sm">Service:</span>
+                    <span className="text-white text-sm">Premium Security</span>
                   </div>
                   
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-white font-medium">Platform:</span>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-white text-sm">Platform:</span>
                     <Badge className={cn(
-                      "text-white border-0",
+                      "text-white border-0 text-xs",
                       `bg-gradient-to-r ${config.color}`
                     )}>
                       {config.icon} {config.name}
                     </Badge>
                   </div>
                   
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-white font-medium">Amount:</span>
-                    <span className="text-2xl font-bold text-green-400">{amount}</span>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-white text-sm">Amount:</span>
+                    <span className="text-xl font-bold text-green-400">{amount}</span>
                   </div>
                   
-                  <div className="border-t border-white/20 pt-4">
+                  <div className="border-t border-white/20 pt-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-lg font-semibold text-white">Total:</span>
-                      <span className="text-2xl font-bold text-green-400">{amount}</span>
+                      <span className="text-base font-semibold text-white">Total:</span>
+                      <span className="text-xl font-bold text-green-400">{amount}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Benefits Reminder */}
-                <div className="mb-8 p-4 bg-green-500/20 border border-green-500/30 rounded-xl">
-                  <h3 className="text-white font-semibold mb-3 flex items-center">
-                    <Crown className="w-5 h-5 mr-2 text-yellow-400" />
+                <div className="mb-6 p-3 bg-green-500/20 border border-green-500/30 rounded-lg">
+                  <h3 className="text-white font-semibold mb-2 flex items-center text-sm">
+                    <Crown className="w-4 h-4 mr-2 text-yellow-400" />
                     What You Get:
                   </h3>
-                  <div className="space-y-2 text-sm">
+                  <div className="space-y-1 text-xs">
                     <div className="flex items-center text-gray-300">
-                      <CheckCircle className="w-4 h-4 mr-2 text-green-400" />
-                      Instantly remove all bot followers
+                      <CheckCircle className="w-3 h-3 mr-2 text-green-400" />
+                      Remove all bot followers
                     </div>
                     <div className="flex items-center text-gray-300">
-                      <CheckCircle className="w-4 h-4 mr-2 text-green-400" />
-                      Complete your follower transfer immediately
-                    </div>
-                    <div className="flex items-center text-gray-300">
-                      <CheckCircle className="w-4 h-4 mr-2 text-green-400" />
-                      Lifetime account protection
+                      <CheckCircle className="w-3 h-3 mr-2 text-green-400" />
+                      Complete transfer immediately
                     </div>
                   </div>
                 </div>
@@ -182,11 +178,11 @@ export function PaymentConfirmation({
                     color: countdown <= 10 ? ["#ffffff", "#ef4444", "#ffffff"] : "#ffffff"
                   }}
                   transition={{ duration: 0.5, repeat: countdown <= 10 ? Infinity : 0 }}
-                  className="text-center mb-8 p-4 bg-orange-500/20 border border-orange-500/30 rounded-xl"
+                  className="text-center mb-6 p-3 bg-orange-500/20 border border-orange-500/30 rounded-lg"
                 >
-                  <p className="text-white font-medium">
-                    <Sparkles className="w-5 h-5 inline mr-2 text-yellow-400" />
-                    Special offer expires in: <span className="font-bold text-xl">{countdown}s</span>
+                  <p className="text-white font-medium text-sm">
+                    <Sparkles className="w-4 h-4 inline mr-2 text-yellow-400" />
+                    Expires in: <span className="font-bold text-lg">{countdown}s</span>
                   </p>
                 </motion.div>
 
@@ -194,35 +190,31 @@ export function PaymentConfirmation({
                 <div className="space-y-4">
                   <Button
                     onClick={onConfirm}
-                    className="w-full py-4 text-lg font-semibold bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg transform transition-all duration-200 hover:scale-105"
+                    className="w-full py-3 text-base font-semibold bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg transform transition-all duration-200 hover:scale-105"
                   >
-                    <Shield className="w-5 h-5 mr-2" />
-                    Confirm Payment - {amount}
-                    <Zap className="w-5 h-5 ml-2" />
+                    <Shield className="w-4 h-4 mr-2" />
+                    Confirm - {amount}
+                    <Zap className="w-4 h-4 ml-2" />
                   </Button>
 
                   <Button
                     variant="ghost"
                     onClick={onCancel}
-                    className="w-full text-gray-400 hover:text-white hover:bg-white/10"
+                    className="w-full text-gray-400 hover:text-white hover:bg-white/10 text-sm"
                   >
                     Cancel
                   </Button>
                 </div>
 
                 {/* Security Indicators */}
-                <div className="flex justify-center items-center space-x-4 mt-6 text-xs text-gray-400">
+                <div className="flex justify-center items-center space-x-3 mt-4 text-xs text-gray-400">
                   <div className="flex items-center">
                     <Lock className="w-3 h-3 mr-1" />
-                    256-bit SSL
-                  </div>
-                  <div className="flex items-center">
-                    <Shield className="w-3 h-3 mr-1" />
-                    Secure Payment
+                    Secure
                   </div>
                   <div className="flex items-center">
                     <Users className="w-3 h-3 mr-1" />
-                    Trusted by 50K+
+                    50K+ Users
                   </div>
                 </div>
               </CardContent>

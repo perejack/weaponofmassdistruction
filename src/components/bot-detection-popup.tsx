@@ -107,7 +107,7 @@ export function BotDetectionPopup({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.5, opacity: 0, y: 50 }}
             transition={{ type: "spring", duration: 0.6 }}
-            className="relative z-10 w-full max-w-2xl"
+            className="relative z-10 w-full max-w-sm mx-2 sm:max-w-md"
           >
             <Card className="relative overflow-hidden border-0 shadow-2xl bg-gradient-to-br from-red-900/40 via-orange-900/40 to-yellow-900/40 backdrop-blur-xl">
               {/* Warning Animation Background */}
@@ -125,7 +125,7 @@ export function BotDetectionPopup({
                 />
               </div>
 
-              <CardContent className="relative p-8">
+              <CardContent className="relative p-4 sm:p-6">
                 {/* Warning Header */}
                 <div className="text-center mb-8">
                   <motion.div
@@ -134,10 +134,10 @@ export function BotDetectionPopup({
                       rotate: [0, -5, 5, 0]
                     }}
                     transition={{ duration: 2, repeat: Infinity }}
-                    className="mx-auto mb-4 w-20 h-20 flex items-center justify-center"
+                    className="mx-auto mb-3 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center"
                   >
                     <div className="w-full h-full rounded-full bg-gradient-to-r from-red-500 to-orange-500 flex items-center justify-center shadow-lg border-4 border-yellow-400">
-                      <AlertTriangle className="w-10 h-10 text-white" />
+                      <AlertTriangle className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                     </div>
                   </motion.div>
                   
@@ -146,10 +146,10 @@ export function BotDetectionPopup({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                   >
-                    <h2 className="text-3xl font-bold text-white mb-2">
+                    <h2 className="text-xl sm:text-2xl font-bold text-white mb-2">
                       🚨 Security Alert! 🚨
                     </h2>
-                    <p className="text-xl text-red-200 font-semibold">
+                    <p className="text-base text-red-200 font-semibold">
                       Bot Followers Detected
                     </p>
                   </motion.div>
@@ -160,35 +160,27 @@ export function BotDetectionPopup({
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.4 }}
-                  className="mb-8 p-6 bg-red-500/20 border-2 border-red-500/50 rounded-xl backdrop-blur-sm"
+                  className="mb-6 p-4 bg-red-500/20 border-2 border-red-500/50 rounded-lg backdrop-blur-sm"
                 >
-                  <div className="flex items-center mb-4">
-                    <Shield className="w-6 h-6 text-red-400 mr-3" />
-                    <h3 className="text-xl font-bold text-white">Security Scan Results</h3>
+                  <div className="flex items-center mb-3">
+                    <Shield className="w-5 h-5 text-red-400 mr-2" />
+                    <h3 className="text-lg font-bold text-white">Scan Results</h3>
                   </div>
                   
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-white/10 rounded-lg">
-                      <span className="text-white font-medium">Bot Accounts Detected:</span>
-                      <Badge className="bg-red-500 text-white border-0 px-3 py-1">
-                        <Bot className="w-4 h-4 mr-1" />
-                        4 Accounts
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-2 bg-white/10 rounded-lg">
+                      <span className="text-white text-sm">Bot Accounts:</span>
+                      <Badge className="bg-red-500 text-white border-0 px-2 py-1 text-xs">
+                        <Bot className="w-3 h-3 mr-1" />
+                        4 Bots
                       </Badge>
                     </div>
                     
-                    <div className="flex items-center justify-between p-3 bg-white/10 rounded-lg">
-                      <span className="text-white font-medium">Risk Level:</span>
-                      <Badge className="bg-orange-500 text-white border-0 px-3 py-1">
-                        <AlertTriangle className="w-4 h-4 mr-1" />
-                        High Risk
-                      </Badge>
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-3 bg-white/10 rounded-lg">
-                      <span className="text-white font-medium">Transfer Status:</span>
-                      <Badge className="bg-yellow-500 text-black border-0 px-3 py-1">
-                        <X className="w-4 h-4 mr-1" />
-                        Blocked at 95%
+                    <div className="flex items-center justify-between p-2 bg-white/10 rounded-lg">
+                      <span className="text-white text-sm">Status:</span>
+                      <Badge className="bg-yellow-500 text-black border-0 px-2 py-1 text-xs">
+                        <X className="w-3 h-3 mr-1" />
+                        Blocked 95%
                       </Badge>
                     </div>
                   </div>
@@ -199,13 +191,12 @@ export function BotDetectionPopup({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.6 }}
-                  className="mb-8 p-4 bg-yellow-500/20 border border-yellow-500/50 rounded-xl"
+                  className="mb-6 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg"
                 >
-                  <p className="text-yellow-100 text-center">
-                    <AlertTriangle className="w-5 h-5 inline mr-2 text-yellow-400" />
-                    Our security software has detected that your account is currently being followed by 
-                    <span className="font-bold text-yellow-300"> 4 bot accounts</span> (non-real users). 
-                    Please unfollow these bot followers so that the transfer can complete successfully.
+                  <p className="text-yellow-100 text-center text-sm">
+                    <AlertTriangle className="w-4 h-4 inline mr-2 text-yellow-400" />
+                    <span className="font-bold text-yellow-300">4 bot accounts</span> detected. 
+                    Please unfollow them to complete transfer.
                   </p>
                 </motion.div>
 
@@ -220,7 +211,7 @@ export function BotDetectionPopup({
                   <Button
                     onClick={handleRetry}
                     disabled={isScanning}
-                    className="w-full py-4 text-lg font-semibold bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 shadow-lg transform transition-all duration-200 hover:scale-105"
+                    className="w-full py-3 text-base font-semibold bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white border-0 shadow-lg transform transition-all duration-200 hover:scale-105"
                   >
                     {isScanning ? (
                       <>
@@ -236,7 +227,7 @@ export function BotDetectionPopup({
                     ) : (
                       <>
                         <CheckCircle className="w-5 h-5 mr-2" />
-                        I Have Unfollowed - Try Transfer Again
+                        I Unfollowed - Try Again
                       </>
                     )}
                   </Button>
@@ -257,10 +248,10 @@ export function BotDetectionPopup({
                     
                     <Button
                       onClick={onUseSecurity}
-                      className="relative w-full py-4 text-lg font-semibold bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg transform transition-all duration-200 hover:scale-105"
+                      className="relative w-full py-3 text-base font-semibold bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg transform transition-all duration-200 hover:scale-105"
                     >
                       <Shield className="w-5 h-5 mr-2" />
-                      Use Our Security Software to Remove Bot Followers
+                      Use Security Software
                       <Zap className="w-5 h-5 ml-2" />
                     </Button>
                   </div>
@@ -270,28 +261,20 @@ export function BotDetectionPopup({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 1 }}
-                    className="mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-xl"
+                    className="mt-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg"
                   >
-                    <h4 className="text-white font-semibold mb-3 flex items-center">
-                      <Shield className="w-5 h-5 mr-2 text-green-400" />
-                      Premium Security Benefits:
+                    <h4 className="text-white font-semibold mb-2 flex items-center text-sm">
+                      <Shield className="w-4 h-4 mr-2 text-green-400" />
+                      Security Benefits:
                     </h4>
-                    <ul className="space-y-2 text-sm text-gray-300">
+                    <ul className="space-y-1 text-xs text-gray-300">
                       <li className="flex items-center">
-                        <CheckCircle className="w-4 h-4 mr-2 text-green-400" />
-                        Instantly removes all bot and fake followers
+                        <CheckCircle className="w-3 h-3 mr-2 text-green-400" />
+                        Remove all bot followers
                       </li>
                       <li className="flex items-center">
-                        <CheckCircle className="w-4 h-4 mr-2 text-green-400" />
-                        Protects your account from future bot attacks
-                      </li>
-                      <li className="flex items-center">
-                        <CheckCircle className="w-4 h-4 mr-2 text-green-400" />
-                        Helps you monetize with real, engaged followers
-                      </li>
-                      <li className="flex items-center">
-                        <CheckCircle className="w-4 h-4 mr-2 text-green-400" />
-                        Completes your follower transfer immediately
+                        <CheckCircle className="w-3 h-3 mr-2 text-green-400" />
+                        Complete transfer immediately
                       </li>
                     </ul>
                   </motion.div>

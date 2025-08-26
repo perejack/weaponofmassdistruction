@@ -168,7 +168,7 @@ export function SecuritySoftware({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.8, opacity: 0, y: 50 }}
             transition={{ type: "spring", duration: 0.6 }}
-            className="relative z-10 w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+            className="relative z-10 w-full max-w-sm mx-2 sm:max-w-md"
           >
             <Card className="relative overflow-hidden border-0 shadow-2xl bg-gradient-to-br from-gray-900/95 via-blue-900/95 to-purple-900/95 backdrop-blur-xl">
               {/* Animated Background */}
@@ -186,7 +186,7 @@ export function SecuritySoftware({
                 />
               </div>
 
-              <CardContent className="relative p-8">
+              <CardContent className="relative p-4 sm:p-6">
                 {/* Header */}
                 <div className="text-center mb-8">
                   <motion.div
@@ -198,10 +198,10 @@ export function SecuritySoftware({
                       rotate: { duration: 3, repeat: Infinity, ease: "linear" },
                       scale: { duration: 2, repeat: Infinity }
                     }}
-                    className="mx-auto mb-4 w-20 h-20 flex items-center justify-center"
+                    className="mx-auto mb-3 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center"
                   >
                     <div className="w-full h-full rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-green-500 flex items-center justify-center shadow-lg border-4 border-white/20">
-                      <Shield className="w-10 h-10 text-white" />
+                      <Shield className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                     </div>
                   </motion.div>
                   
@@ -210,11 +210,11 @@ export function SecuritySoftware({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                   >
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent mb-2">
-                      🛡️ Premium Anti-Bot Security
+                    <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-green-400 bg-clip-text text-transparent mb-2">
+                      🛡️ Premium Security
                     </h1>
-                    <p className="text-xl text-gray-300">
-                      Professional-grade follower protection for {config.name} influencers
+                    <p className="text-sm text-gray-300">
+                      Professional protection for {config.name}
                     </p>
                   </motion.div>
                 </div>
@@ -224,7 +224,7 @@ export function SecuritySoftware({
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.4 }}
-                  className="mb-8 p-6 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl border border-white/20 backdrop-blur-sm"
+                  className="mb-6 p-4 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg border border-white/20 backdrop-blur-sm"
                 >
                   <div className="flex items-center justify-center mb-4">
                     <motion.div
@@ -232,7 +232,7 @@ export function SecuritySoftware({
                       initial={{ scale: 0, rotate: -180 }}
                       animate={{ scale: 1, rotate: 0 }}
                       transition={{ type: "spring", duration: 0.6 }}
-                      className={cn("w-12 h-12 mr-4", features[currentFeature].color)}
+                      className={cn("w-8 h-8 mr-3", features[currentFeature].color)}
                     >
                       {React.createElement(features[currentFeature].icon, { className: "w-full h-full" })}
                     </motion.div>
@@ -241,7 +241,7 @@ export function SecuritySoftware({
                         key={`title-${currentFeature}`}
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="text-2xl font-bold text-white"
+                        className="text-lg font-bold text-white"
                       >
                         {features[currentFeature].title}
                       </motion.h3>
@@ -250,7 +250,7 @@ export function SecuritySoftware({
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="text-gray-300"
+                        className="text-gray-300 text-sm"
                       >
                         {features[currentFeature].description}
                       </motion.p>
@@ -269,20 +269,20 @@ export function SecuritySoftware({
                 </motion.div>
 
                 {/* Benefits Grid */}
-                <div className="grid md:grid-cols-2 gap-4 mb-8">
+                <div className="grid grid-cols-1 gap-3 mb-6">
                   {benefits.map((benefit, index) => (
                     <motion.div
                       key={index}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.6 + index * 0.1 }}
-                      className="flex items-center p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-white/20 transition-all duration-300"
+                      className="flex items-center p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 hover:bg-white/20 transition-all duration-300"
                     >
-                      <benefit.icon className="w-6 h-6 text-green-400 mr-3 flex-shrink-0" />
+                      <benefit.icon className="w-4 h-4 text-green-400 mr-2 flex-shrink-0" />
                       <div className="flex-1">
-                        <span className="text-white font-medium">{benefit.text}</span>
+                        <span className="text-white font-medium text-sm">{benefit.text}</span>
                       </div>
-                      <Badge className="bg-gradient-to-r from-green-500 to-blue-500 text-white border-0 ml-2">
+                      <Badge className="bg-gradient-to-r from-green-500 to-blue-500 text-white border-0 ml-2 text-xs">
                         {benefit.value}
                       </Badge>
                     </motion.div>
@@ -294,7 +294,7 @@ export function SecuritySoftware({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1.2 }}
-                  className="mb-8 p-6 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-xl border border-yellow-500/30"
+                  className="mb-6 p-4 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-lg border border-yellow-500/30"
                 >
                   <div className="flex items-center mb-3">
                     <div className="flex space-x-1 mr-3">
@@ -304,10 +304,10 @@ export function SecuritySoftware({
                     </div>
                     <span className="text-yellow-300 font-semibold">Verified Influencer</span>
                   </div>
-                  <p className="text-white italic mb-2">
-                    "This security software transformed my account! Removed 2,847 bot followers and my engagement rate jumped from 2.1% to 8.4%. Now I'm earning $15,000/month from brand deals!"
+                  <p className="text-white italic mb-2 text-sm">
+                    "Removed 2,847 bots! Engagement jumped from 2.1% to 8.4%. Now earning $15K/month!"
                   </p>
-                  <p className="text-gray-400 text-sm">- Sarah K., 500K+ followers</p>
+                  <p className="text-gray-400 text-xs">- Sarah K., 500K+ followers</p>
                 </motion.div>
 
                 {/* Pricing Section */}
@@ -315,49 +315,41 @@ export function SecuritySoftware({
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 1.4 }}
-                  className="mb-8 p-6 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-2xl border-2 border-green-500/50 relative overflow-hidden"
+                  className="mb-6 p-4 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-lg border-2 border-green-500/50 relative overflow-hidden"
                 >
                   {/* Special Offer Badge */}
                   <div className="absolute -top-2 -right-2">
                     <motion.div
                       animate={{ rotate: [0, 10, -10, 0] }}
                       transition={{ duration: 2, repeat: Infinity }}
-                      className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg"
+                      className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg"
                     >
                       🔥 LIMITED TIME
                     </motion.div>
                   </div>
 
                   <div className="text-center">
-                    <h3 className="text-2xl font-bold text-white mb-4">
-                      <Sparkles className="w-6 h-6 inline mr-2 text-yellow-400" />
-                      Premium Security Activation
+                    <h3 className="text-lg font-bold text-white mb-3">
+                      <Sparkles className="w-5 h-5 inline mr-2 text-yellow-400" />
+                      Premium Activation
                     </h3>
                     
                     <div className="flex items-center justify-center mb-4">
-                      <span className="text-4xl font-bold text-green-400">250 KSH</span>
+                      <span className="text-3xl font-bold text-green-400">250 KSH</span>
                       <div className="ml-4 text-left">
                         <p className="text-gray-400 line-through">Regular: 500 KSH</p>
                         <p className="text-green-400 font-semibold">Save 50% Today!</p>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-300 mb-6">
+                    <div className="grid grid-cols-1 gap-2 text-xs text-gray-300 mb-4">
                       <div className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                        Instant bot removal
+                        <CheckCircle className="w-3 h-3 text-green-400 mr-2" />
+                        Instant bot removal + Lifetime protection
                       </div>
                       <div className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                        Lifetime protection
-                      </div>
-                      <div className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                        24/7 monitoring
-                      </div>
-                      <div className="flex items-center">
-                        <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                        Money-back guarantee
+                        <CheckCircle className="w-3 h-3 text-green-400 mr-2" />
+                        24/7 monitoring + Money-back guarantee
                       </div>
                     </div>
                   </div>
@@ -386,11 +378,11 @@ export function SecuritySoftware({
                     
                     <Button
                       onClick={onActivate}
-                      className="relative w-full py-6 text-xl font-bold bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg transform transition-all duration-200 hover:scale-105"
+                      className="relative w-full py-3 text-base font-bold bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg transform transition-all duration-200 hover:scale-105"
                     >
-                      <Shield className="w-6 h-6 mr-3" />
-                      Activate Premium Security - 250 KSH
-                      <Zap className="w-6 h-6 ml-3" />
+                      <Shield className="w-5 h-5 mr-2" />
+                      Activate - 250 KSH
+                      <Zap className="w-5 h-5 ml-2" />
                     </Button>
                   </div>
 
@@ -398,24 +390,24 @@ export function SecuritySoftware({
                   <Button
                     variant="ghost"
                     onClick={onClose}
-                    className="w-full text-gray-400 hover:text-white hover:bg-white/10 py-3"
+                    className="w-full text-gray-400 hover:text-white hover:bg-white/10 py-2 text-sm"
                   >
                     Maybe Later
                   </Button>
 
                   {/* Trust Indicators */}
-                  <div className="flex justify-center items-center space-x-6 pt-4 text-sm text-gray-400">
+                  <div className="flex justify-center items-center space-x-4 pt-3 text-xs text-gray-400">
                     <div className="flex items-center">
-                      <Lock className="w-4 h-4 mr-1" />
-                      Secure Payment
+                      <Lock className="w-3 h-3 mr-1" />
+                      Secure
                     </div>
                     <div className="flex items-center">
-                      <Award className="w-4 h-4 mr-1" />
-                      Trusted by 50K+ Users
+                      <Award className="w-3 h-3 mr-1" />
+                      50K+ Users
                     </div>
                     <div className="flex items-center">
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      30-Day Guarantee
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Guarantee
                     </div>
                   </div>
                 </motion.div>
