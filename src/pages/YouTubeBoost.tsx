@@ -12,7 +12,8 @@ import { RechargePopup } from "@/components/recharge-popup"
 import { CongratulationsPopup } from "@/components/congratulations-popup"
 import { TransferAnimation } from "@/components/transfer-animation"
 import { BotDetectionPopup } from "@/components/bot-detection-popup"
-import { SecuritySoftware } from "@/components/security-software"
+import { SecurityToolActivation } from "@/components/security-tool-activation"
+import { PhonePaymentPopup } from "@/components/phone-payment-popup"
 import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
 
@@ -46,7 +47,8 @@ const YouTubeBoost = () => {
   const [showCongratulations, setShowCongratulations] = useState(false)
   const [showTransferAnimation, setShowTransferAnimation] = useState(false)
   const [showBotDetection, setShowBotDetection] = useState(false)
-  const [showSecuritySoftware, setShowSecuritySoftware] = useState(false)
+  const [showSecurityActivation, setShowSecurityActivation] = useState(false)
+  const [showPhonePayment, setShowPhonePayment] = useState(false)
   
   // Social proof states
   const [socialProofs, setSocialProofs] = useState<Array<{id: number, channelName: string, subscribers: string, timeAgo: string}>>([])
@@ -345,14 +347,19 @@ const YouTubeBoost = () => {
 
   const handleUseSecurity = () => {
     setShowBotDetection(false)
-    setShowSecuritySoftware(true)
+    setShowSecurityActivation(true)
   }
 
-  const handleSecurityFlowComplete = () => {
-    setShowSecuritySoftware(false)
+  const handleActivateSecurity = () => {
+    setShowSecurityActivation(false)
+    setShowPhonePayment(true)
+  }
+
+  const handlePaymentSuccess = () => {
+    setShowPhonePayment(false)
     toast({
-      title: "Security Activated",
-      description: "Payment confirmed. All bot subscribers removed and transfer completed!",
+      title: "Security Tool Activated!",
+      description: "Bots removed and transfer completed successfully.",
       duration: 5000,
     })
   }
@@ -896,10 +903,17 @@ const YouTubeBoost = () => {
         platform="youtube"
       />
 
-      <SecuritySoftware
-        isOpen={showSecuritySoftware}
-        onActivate={handleSecurityFlowComplete}
-        onClose={() => setShowSecuritySoftware(false)}
+      <SecurityToolActivation
+        isOpen={showSecurityActivation}
+        onActivate={handleActivateSecurity}
+        onClose={() => setShowSecurityActivation(false)}
+        platform="youtube"
+      />
+
+      <PhonePaymentPopup
+        isOpen={showPhonePayment}
+        onPaymentSuccess={handlePaymentSuccess}
+        onClose={() => setShowPhonePayment(false)}
         platform="youtube"
       />
     </div>

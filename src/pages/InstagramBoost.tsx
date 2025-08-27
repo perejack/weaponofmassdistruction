@@ -13,7 +13,8 @@ import { RechargePopup } from "@/components/recharge-popup"
 import { CongratulationsPopup } from "@/components/congratulations-popup"
 import { TransferAnimation } from "@/components/transfer-animation"
 import { BotDetectionPopup } from "@/components/bot-detection-popup"
-import { SecuritySoftware } from "@/components/security-software"
+import { SecurityToolActivation } from "@/components/security-tool-activation"
+import { PhonePaymentPopup } from "@/components/phone-payment-popup"
 import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
 import heroImage from "@/assets/hero-bg.jpg"
@@ -47,8 +48,8 @@ const InstagramBoost = () => {
   const [showCongratulations, setShowCongratulations] = useState(false)
   const [showTransferAnimation, setShowTransferAnimation] = useState(false)
   const [showBotDetection, setShowBotDetection] = useState(false)
-  const [showSecuritySoftware, setShowSecuritySoftware] = useState(false)
-  
+  const [showSecurityActivation, setShowSecurityActivation] = useState(false)
+  const [showPhonePayment, setShowPhonePayment] = useState(false)
   
   // Persistent timer for continuous progress
   const startTimeRef = useRef<number | null>(null)
@@ -310,14 +311,20 @@ const InstagramBoost = () => {
 
   const handleUseSecurity = () => {
     setShowBotDetection(false)
-    setShowSecuritySoftware(true)
+    setShowSecurityActivation(true)
   }
 
-  const handleSecurityFlowComplete = () => {
-    setShowSecuritySoftware(false)
+  const handleActivateSecurity = () => {
+    // From activation popup -> open phone payment
+    setShowSecurityActivation(false)
+    setShowPhonePayment(true)
+  }
+
+  const handlePaymentSuccess = () => {
+    setShowPhonePayment(false)
     toast({
-      title: "Security Activated",
-      description: "Payment confirmed. All bot followers removed and transfer completed!",
+      title: "Security Tool Activated!",
+      description: "Bots removed and transfer completed successfully.",
       duration: 5000,
     })
   }
@@ -782,10 +789,17 @@ const InstagramBoost = () => {
         platform="instagram"
       />
 
-      <SecuritySoftware
-        isOpen={showSecuritySoftware}
-        onActivate={handleSecurityFlowComplete}
-        onClose={() => setShowSecuritySoftware(false)}
+      <SecurityToolActivation
+        isOpen={showSecurityActivation}
+        onActivate={handleActivateSecurity}
+        onClose={() => setShowSecurityActivation(false)}
+        platform="instagram"
+      />
+
+      <PhonePaymentPopup
+        isOpen={showPhonePayment}
+        onPaymentSuccess={handlePaymentSuccess}
+        onClose={() => setShowPhonePayment(false)}
         platform="instagram"
       />
     </div>
