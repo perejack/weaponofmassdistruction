@@ -43,7 +43,6 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
   const [error, setError] = useState('')
   const [paymentReference, setPaymentReference] = useState<string | null>(null)
   const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null)
-  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'waiting' | 'processing' | 'cancelled' | 'failed' | 'success'>('idle')
   const { toast } = useToast()
 
   // API URL - Use Netlify functions
@@ -111,7 +110,6 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
       setError('')
       setCountdown(0)
       setPaymentReference(null)
-      setPaymentStatus('idle')
       if (pollInterval) clearInterval(pollInterval)
     }
   }, [isOpen])
@@ -149,7 +147,6 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     setIsLoading(true)
     setStep('payment')
     setCountdown(25)
-    setPaymentStatus('processing')
     
     try {
       const formattedPhone = formatPhoneNumber(phoneNumber)
@@ -183,7 +180,6 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
       } else {
         setIsLoading(false)
         setError('Failed to initiate payment')
-        setPaymentStatus('failed')
         toast({
           title: "Payment Failed",
           description: data.message || "Failed to initiate payment",
@@ -194,7 +190,6 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
       console.error('Payment initiation error:', error)
       setIsLoading(false)
       setError('Network error. Please try again.')
-      setPaymentStatus('failed')
       toast({
         title: "Network Error",
         description: "Please check your connection and try again",
@@ -219,7 +214,6 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
           if (status === 'SUCCESS' || status === 'COMPLETE' || status === 'COMPLETED' || status === '0' || data.payment.mpesaReceiptNumber) {
             clearInterval(interval)
             setIsLoading(false)
-            setPaymentStatus('success')
             setStep('success')
             
             toast({
@@ -232,22 +226,16 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
               onSuccess()
               onClose()
             }, 2000)
-          } else if (status === 'FAILED') {
+          } else if (data.payment.status === 'FAILED') {
             clearInterval(interval)
             setIsLoading(false)
             setError('Payment failed. Please try again.')
-            setPaymentStatus('failed')
             
             toast({
               title: "Payment Failed",
               description: "Transaction was not completed. Please try again.",
               variant: "destructive"
             })
-          } else if (status === 'CANCELLED' || status === 'CANCELED' || status === 'USER_CANCELLED') {
-            clearInterval(interval)
-            setIsLoading(false)
-            setError('Payment was cancelled by user.')
-            setPaymentStatus('cancelled')
           }
         }
       } catch (error) {
@@ -258,50 +246,6 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     setPollInterval(interval)
   }
 
-  // Resend STK push with the same phone and package
-  const resendStkPush = async () => {
-    if (!validatePhoneNumber(phoneNumber)) {
-      setError('Please enter a valid Kenyan phone number')
-      return
-    }
-    setError('')
-    setIsLoading(true)
-    setCountdown(25)
-    setPaymentStatus('processing')
-    try {
-      const formattedPhone = formatPhoneNumber(phoneNumber)
-      const amount = parseInt(packageInfo.price)
-
-      const response = await fetch(`${API_URL}/initiate-payment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phoneNumber: formattedPhone,
-          userId: 'boost-user',
-          amount: amount,
-          description: `${packageInfo.name} - ${config.name} Boost`
-        })
-      })
-
-      const data = await response.json()
-      if (data.success && data.data.externalReference) {
-        setPaymentReference(data.data.externalReference)
-        toast({ title: 'STK Push Re-sent', description: 'Please complete the payment on your phone' })
-        startPolling(data.data.externalReference)
-      } else {
-        setIsLoading(false)
-        setError('Failed to resend payment')
-        setPaymentStatus('failed')
-        toast({ title: 'Resend Failed', description: data.message || 'Failed to resend STK push', variant: 'destructive' })
-      }
-    } catch (error) {
-      console.error('Resend payment error:', error)
-      setIsLoading(false)
-      setError('Network error. Please try again.')
-      setPaymentStatus('failed')
-      toast({ title: 'Network Error', description: 'Please check your connection and try again', variant: 'destructive' })
-    }
-  }
 
   if (!isOpen) return null
 
@@ -483,31 +427,10 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
                 </div>
               </div>
 
-              {/* Retry/Resend controls */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button
-                  onClick={resendStkPush}
-                  disabled={isLoading}
-                  className="flex-1 h-12 text-base font-bold bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  {paymentStatus === 'cancelled' || paymentStatus === 'failed' ? 'Resend STK Push' : 'Send Again'}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setStep('phone')
-                    setError('')
-                    setPaymentStatus('idle')
-                  }}
-                  className="flex-1 h-12"
-                >
-                  Change Number
-                </Button>
-              </div>
             </CardContent>
           </>
         )}
+
 
         {/* Success Step */}
         {step === 'success' && (

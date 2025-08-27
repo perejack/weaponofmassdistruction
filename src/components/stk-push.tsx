@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/enhanced-button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Smartphone, Send, ArrowLeft, Shield, CheckCircle, AlertCircle, Loader2 } from "lucide-react"
+import { Smartphone, Send, ArrowLeft, Shield, CheckCircle, AlertCircle, Loader2, CreditCard, Key } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface STKPushProps {
@@ -17,7 +17,7 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
   const [phoneNumber, setPhoneNumber] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentReference, setPaymentReference] = useState<string | null>(null)
-  const [status, setStatus] = useState<'idle' | 'pending' | 'success' | 'failed' | 'cancelled'>('idle')
+  const [status, setStatus] = useState<'idle' | 'pending' | 'success' | 'failed'>('idle')
   const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null)
   const { toast } = useToast()
 
@@ -129,7 +129,13 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
         const response = await fetch(`${API_URL}/payment-status/${reference}`)
         const data = await response.json()
         
+        // Log full response for debugging
+        console.log('Full payment status response:', data);
+
         if (data.success && data.payment) {
+          // Log the payment data for debugging
+          console.log('Payment status response:', data.payment);
+          
           // Check for various success status formats
           const status = data.payment.status?.toUpperCase();
           if (status === 'SUCCESS' || status === 'COMPLETE' || status === 'COMPLETED' || status === '0' || data.payment.mpesaReceiptNumber) {
@@ -146,7 +152,7 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
             setTimeout(() => {
               onSuccess(reference)
             }, 2000)
-          } else if (status === 'FAILED') {
+          } else if (data.payment.status === 'FAILED') {
             clearInterval(interval)
             setStatus('failed')
             setIsProcessing(false)
@@ -155,14 +161,6 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
               title: "Payment Failed",
               description: "Transaction was not completed. Please try again.",
               variant: "destructive"
-            })
-          } else if (status === 'CANCELLED' || status === 'CANCELED' || status === 'USER_CANCELLED') {
-            clearInterval(interval)
-            setStatus('cancelled')
-            setIsProcessing(false)
-            toast({
-              title: "Payment Cancelled",
-              description: "You cancelled the STK push. You can send it again.",
             })
           }
         }
@@ -247,17 +245,6 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
           </div>
         )}
 
-        {status === 'cancelled' && (
-          <div className="bg-yellow-500/10 rounded-lg p-4 border border-yellow-500/20">
-            <div className="flex items-center gap-2 text-yellow-600 mb-2">
-              <AlertCircle className="w-4 h-4" />
-              <span className="font-medium">Payment Cancelled</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              You cancelled the STK push. You can send it again below.
-            </p>
-          </div>
-        )}
 
         {status === 'failed' && (
           <div className="bg-destructive/10 rounded-lg p-4 border border-destructive/20">
@@ -283,10 +270,10 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Processing...
               </>
-            ) : status === 'failed' || status === 'cancelled' ? (
+            ) : status === 'failed' ? (
               <>
                 <Send className="w-4 h-4 mr-2" />
-                Send STK Push Again
+                Try Payment Again
               </>
             ) : (
               <>

@@ -19,10 +19,7 @@ import {
   X,
   Scan, 
   Search, 
-  UserCheck, 
-  Smartphone, 
-  Send, 
-  Loader2,
+  UserCheck,
   Eye,
   ArrowLeft,
   Unlock,
@@ -46,11 +43,7 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
   const [showSuccess, setShowSuccess] = useState(false)
   const [showSTKPush, setShowSTKPush] = useState(false)
   const [verificationProgress, setVerificationProgress] = useState(0)
-  const [phoneNumber, setPhoneNumber] = useState("")
-  const [phoneError, setPhoneError] = useState("")
-  const [isSendingStk, setIsSendingStk] = useState(false)
   const [showBenefits, setShowBenefits] = useState(false)
-  const [apiError, setApiError] = useState("")
 
   const verificationSteps = [
     { icon: Search, text: "Connecting to Instagram servers..." },
@@ -94,16 +87,6 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
     }
   }, [isVerifying])
 
-  // Auto-continue after success without requiring manual click
-  useEffect(() => {
-    if (showSuccess) {
-      const timer = setTimeout(() => {
-        onVerify()
-      }, 1500)
-      return () => clearTimeout(timer)
-    }
-  }, [showSuccess, onVerify])
-
   const handleStartVerification = () => {
     setIsVerifying(true)
     setVerificationStep(0)
@@ -113,93 +96,6 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
   const handleCompletePayment = () => {
     setShowPayment(false)
     setShowSTKPush(true)
-  }
-
-  const validatePhoneNumber = (num: string) => {
-    // Validates Kenyan phone numbers (e.g., 07..., 01..., 7..., 2547...)
-    const kenyanPhoneRegex = /^(?:254|\+254|0)?(7|1)\d{8}$/
-    return kenyanPhoneRegex.test(num.trim())
-  }
-
-  const initiateStkPush = async (phone: string) => {
-    // This is a placeholder for the actual API call.
-    // Replace '/api/stk-push' with your actual backend endpoint.
-    try {
-      /*
-      const response = await fetch('/api/stk-push', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ phoneNumber: phone }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to initiate STK push.');
-      }
-
-      return await response.json();
-      */
-
-      // Simulate a successful API call for now
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      return { success: true, message: "STK push initiated successfully." };
-
-    } catch (error) {
-      console.error("STK Push API error:", error);
-      if (error instanceof Error) {
-          throw new Error(error.message);
-      }
-      throw new Error("An unknown error occurred.");
-    }
-  };
-
-  const handleStkPush = async () => {
-    if (validatePhoneNumber(phoneNumber)) {
-      setPhoneError("");
-      setApiError(""); // Clear previous API errors
-      setIsSendingStk(true);
-
-      try {
-        await initiateStkPush(phoneNumber);
-        setIsSendingStk(false);
-        setShowSTKPush(false);
-        setShowSuccess(true);
-      } catch (error) {
-        setIsSendingStk(false);
-        if (error instanceof Error) {
-          setApiError(error.message);
-        } else {
-          setApiError("An unexpected error occurred. Please try again.");
-        }
-      }
-    } else {
-      setPhoneError("Please enter a valid Kenyan phone number (e.g., 0712345678).");
-    }
-  }
-
-  const formatPhoneNumber = (value: string) => {
-    // Remove all non-digits
-    const digits = value.replace(/\D/g, '')
-    
-    // Format as Kenyan number
-    if (digits.startsWith('254')) {
-      return digits.slice(0, 12)
-    } else if (digits.startsWith('0')) {
-      return digits.slice(0, 10)
-    } else if (digits.startsWith('7')) {
-      return digits.slice(0, 9)
-    }
-    return digits.slice(0, 10)
-  }
-
-    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (phoneError) {
-      setPhoneError("")
-    }
-    const formatted = formatPhoneNumber(e.target.value)
-    setPhoneNumber(formatted)
   }
 
   if (!isOpen) return null
