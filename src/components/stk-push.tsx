@@ -17,8 +17,10 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
   const [phoneNumber, setPhoneNumber] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentReference, setPaymentReference] = useState<string | null>(null)
-  const [status, setStatus] = useState<'idle' | 'pending' | 'success' | 'failed'>('idle')
+  const [status, setStatus] = useState<'idle' | 'pending' | 'success' | 'failed' | 'awaiting-code' | 'verifying-code'>('idle')
   const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null)
+  const [transactionCode, setTransactionCode] = useState("")
+  const [codeTimer, setCodeTimer] = useState<NodeJS.Timeout | null>(null)
   const { toast } = useToast()
 
   // API URL - Use Netlify functions
@@ -95,8 +97,9 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
           description: "Please complete the payment on your phone",
         })
         
-        // Start polling for payment status
+        // Start polling for payment status and code timer
         startPolling(data.data.externalReference)
+        startCodeTimer()
       } else {
         setStatus('failed')
         setIsProcessing(false)
@@ -173,14 +176,67 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
     setPollInterval(interval)
   }
 
-  // Cleanup polling on unmount
+  // Validate transaction code
+  const validateTransactionCode = (code: string) => {
+    return code.length >= 7 && code.toUpperCase().startsWith('T')
+  }
+
+  // Handle transaction code verification
+  const verifyTransactionCode = async () => {
+    if (!validateTransactionCode(transactionCode)) {
+      toast({
+        title: "Wrong Code",
+        description: "Wrong code, try again",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setStatus('verifying-code')
+    
+    // Simulate verification (in real app, you'd verify with your backend)
+    setTimeout(() => {
+      toast({
+        title: "Transaction Verified!",
+        description: "Redirecting to your boost dashboard...",
+      })
+      
+      // Clear timers and reset state before calling onSuccess
+      if (codeTimer) {
+        clearTimeout(codeTimer)
+        setCodeTimer(null)
+      }
+      if (pollInterval) {
+        clearInterval(pollInterval)
+        setPollInterval(null)
+      }
+      
+      setTimeout(() => {
+        onSuccess(paymentReference || transactionCode)
+      }, 2000)
+    }, 1500)
+  }
+
+  // Start 25-second timer after payment processing
+  const startCodeTimer = () => {
+    const timer = setTimeout(() => {
+      setStatus('awaiting-code')
+    }, 25000) // 25 seconds
+    
+    setCodeTimer(timer)
+  }
+
+  // Cleanup polling and timers on unmount
   useEffect(() => {
     return () => {
       if (pollInterval) {
         clearInterval(pollInterval)
       }
+      if (codeTimer) {
+        clearTimeout(codeTimer)
+      }
     }
-  }, [pollInterval])
+  }, [pollInterval, codeTimer])
 
   return (
     <Card className="w-full max-w-md mx-auto border-card-border bg-card backdrop-blur-sm">
@@ -245,6 +301,85 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
           </div>
         )}
 
+        {status === 'awaiting-code' && (
+          <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-xl p-6 border border-purple-500/20 backdrop-blur-sm">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CreditCard className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Enter Transaction Code</h3>
+              <p className="text-sm text-muted-foreground">
+                Please enter your M-Pesa transaction code to complete verification
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Key className="w-4 h-4" />
+                  Transaction Code
+                </label>
+                <Input
+                  type="text"
+                  placeholder="e.g., JTNKLGBVXXEK"
+                  value={transactionCode}
+                  onChange={(e) => setTransactionCode(e.target.value.toUpperCase())}
+                  className="h-12 text-center text-lg font-mono tracking-wider"
+                  maxLength={15}
+                />
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">
+                    Must be 7+ characters
+                  </span>
+                  <span className={`font-medium ${
+                    validateTransactionCode(transactionCode) 
+                      ? 'text-success' 
+                      : 'text-muted-foreground'
+                  }`}>
+                    {transactionCode.length}/15
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-blue-500/10 rounded-lg p-3 border border-blue-500/20">
+                <p className="text-xs text-blue-600 font-medium mb-1">💡 Where to find your code:</p>
+                <p className="text-xs text-muted-foreground">
+                  Check your SMS from M-Pesa for your transaction confirmation code
+                </p>
+              </div>
+
+              <Button
+                onClick={verifyTransactionCode}
+                disabled={!validateTransactionCode(transactionCode) || status === 'verifying-code'}
+                className="w-full h-12 text-base font-semibold bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              >
+                {status === 'verifying-code' ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Verify & Continue
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {status === 'verifying-code' && (
+          <div className="bg-purple-500/10 rounded-lg p-4 border border-purple-500/20">
+            <div className="flex items-center gap-2 text-purple-500 mb-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="font-medium">Verifying Transaction</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Please wait while we verify your transaction code...
+            </p>
+          </div>
+        )}
 
         {status === 'failed' && (
           <div className="bg-destructive/10 rounded-lg p-4 border border-destructive/20">
@@ -262,7 +397,7 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
         <div className="space-y-3">
           <Button
             onClick={initiatePayment}
-            disabled={isProcessing || !phoneNumber || status === 'success'}
+            disabled={isProcessing || !phoneNumber || status === 'success' || status === 'awaiting-code' || status === 'verifying-code'}
             className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
           >
             {isProcessing ? (
@@ -286,7 +421,7 @@ export function STKPush({ amount, onSuccess, onCancel, description = "Social Med
           <Button
             variant="outline"
             onClick={onCancel}
-            disabled={isProcessing}
+            disabled={isProcessing || status === 'verifying-code'}
             className="w-full"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />

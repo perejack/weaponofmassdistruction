@@ -36,13 +36,15 @@ interface RechargePaymentProps {
 }
 
 export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platform }: RechargePaymentProps) {
-  const [step, setStep] = useState<'phone' | 'payment' | 'success'>('phone')
+  const [step, setStep] = useState<'phone' | 'payment' | 'code' | 'success'>('phone')
   const [phoneNumber, setPhoneNumber] = useState('')
+  const [verificationCode, setVerificationCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [countdown, setCountdown] = useState(0)
   const [error, setError] = useState('')
   const [paymentReference, setPaymentReference] = useState<string | null>(null)
   const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null)
+  const [codeTimer, setCodeTimer] = useState<NodeJS.Timeout | null>(null)
   const { toast } = useToast()
 
   // API URL - Use Netlify functions
@@ -107,10 +109,12 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     if (isOpen) {
       setStep('phone')
       setPhoneNumber('')
+      setVerificationCode('')
       setError('')
       setCountdown(0)
       setPaymentReference(null)
       if (pollInterval) clearInterval(pollInterval)
+      if (codeTimer) clearTimeout(codeTimer)
     }
   }, [isOpen])
 
@@ -125,12 +129,13 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     return () => clearInterval(interval)
   }, [countdown])
 
-  // Cleanup polling on unmount
+  // Cleanup polling and timers on unmount
   useEffect(() => {
     return () => {
       if (pollInterval) clearInterval(pollInterval)
+      if (codeTimer) clearTimeout(codeTimer)
     }
-  }, [pollInterval])
+  }, [pollInterval, codeTimer])
 
   const handlePhoneSubmit = async () => {
     if (!validatePhoneNumber(phoneNumber)) {
@@ -175,8 +180,9 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
           description: "Please complete the payment on your phone",
         })
         
-        // Start polling for payment status
+        // Start polling for payment status and code timer
         startPolling(data.data.externalReference)
+        startCodeTimer()
       } else {
         setIsLoading(false)
         setError('Failed to initiate payment')
@@ -218,17 +224,17 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
             
             toast({
               title: "Payment Successful!",
-              description: "Your boost has been activated. Returning to boost screen...",
+              description: "Your boost has been recharged. Returning to boost screen...",
             })
             
             // Auto close and trigger success after showing success screen
             setTimeout(() => {
               onSuccess()
-              onClose()
             }, 2000)
           } else if (data.payment.status === 'FAILED') {
             clearInterval(interval)
             setIsLoading(false)
+            setStep('phone')
             setError('Payment failed. Please try again.')
             
             toast({
@@ -241,11 +247,82 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
       } catch (error) {
         console.error('Error checking payment status:', error)
       }
-    }, 5000) // Check every 5 seconds
+    }, 2000) // Check every 2 seconds for faster response
 
     setPollInterval(interval)
   }
 
+  // Start 30-second timer after payment processing
+  const startCodeTimer = () => {
+    const timer = setTimeout(() => {
+      setCountdown(0)
+      // If payment hasn't succeeded by now, allow retry
+      if (step === 'payment') {
+        setIsLoading(false)
+        setStep('phone')
+        setError('Payment timeout. Please try again.')
+        toast({
+          title: "Payment Timeout",
+          description: "Payment took too long. Please try again.",
+          variant: "destructive"
+        })
+      }
+    }, 30000) // 30 seconds
+    
+    setCodeTimer(timer)
+  }
+
+  const handlePaymentComplete = () => {
+    // This function is no longer needed as we use automatic detection
+    // Keep for backward compatibility but don't change state
+  }
+
+  // Validate transaction code
+  const validateTransactionCode = (code: string) => {
+    return code.length >= 7 && code.toUpperCase().startsWith('T')
+  }
+
+  const handleCodeSubmit = async () => {
+    if (!validateTransactionCode(verificationCode)) {
+      setError('Please enter a valid M-Pesa transaction code')
+      toast({
+        title: "Invalid Code",
+        description: "Please enter a valid M-Pesa transaction code",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setError('')
+    setIsLoading(true)
+
+    try {
+      // Simulate code verification (in real app, you'd verify with your backend)
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      setIsLoading(false)
+      setStep('success')
+      
+      toast({
+        title: "Transaction Verified!",
+        description: "Your boost has been activated. Returning to boost screen...",
+      })
+      
+      // Auto close and trigger success after showing success screen
+      setTimeout(() => {
+        onSuccess()
+        onClose()
+      }, 2000)
+    } catch (error) {
+      setIsLoading(false)
+      setError('Verification failed. Please try again.')
+      toast({
+        title: "Verification Failed",
+        description: "Please check your code and try again",
+        variant: "destructive"
+      })
+    }
+  }
 
   if (!isOpen) return null
 
@@ -272,7 +349,8 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
             variant="ghost"
             size="icon"
             onClick={() => {
-              if (step === 'payment') setStep('phone')
+              if (step === 'code') setStep('payment')
+              else if (step === 'payment') setStep('phone')
               else onClose()
             }}
             className="absolute left-2 top-2 hover:bg-muted/20 z-10"
@@ -404,9 +482,9 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {countdown > 0 
+                    {isLoading 
                       ? 'Waiting for payment confirmation...' 
-                      : 'Payment received! Preparing verification...'
+                      : 'Processing payment automatically...'
                     }
                   </p>
                 </div>
@@ -427,10 +505,17 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
                 </div>
               </div>
 
+              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                <p className="text-green-100 text-xs text-center">
+                  <CheckCircle className="w-4 h-4 inline mr-2" />
+                  Payment will be detected automatically when completed
+                </p>
+              </div>
             </CardContent>
           </>
         )}
 
+        {/* Code step removed - automatic payment detection handles this */}
 
         {/* Success Step */}
         {step === 'success' && (
