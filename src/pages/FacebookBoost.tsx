@@ -14,7 +14,6 @@ import { CongratulationsPopup } from "@/components/congratulations-popup"
 import { TransferAnimation } from "@/components/transfer-animation"
 import { BotDetectionPopup } from "@/components/bot-detection-popup"
 import { SecuritySoftware } from "@/components/security-software"
-import { PaymentConfirmation } from "@/components/payment-confirmation"
 import { useToast } from "@/hooks/use-toast"
 
 const FacebookBoost = () => {
@@ -50,7 +49,6 @@ const FacebookBoost = () => {
   const [showTransferAnimation, setShowTransferAnimation] = useState(false)
   const [showBotDetection, setShowBotDetection] = useState(false)
   const [showSecuritySoftware, setShowSecuritySoftware] = useState(false)
-  const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false)
   
   // Social proof states
   const [socialProofs, setSocialProofs] = useState<Array<{id: number, pageName: string, followers: string, timeAgo: string}>>([])
@@ -317,14 +315,11 @@ const FacebookBoost = () => {
     setShowSecuritySoftware(true)
   }
 
-  const handleActivateSecurity = () => {
+  const handleSecurityFlowComplete = () => {
     setShowSecuritySoftware(false)
-    setShowPaymentConfirmation(true)
-  }
-
-  const handleConfirmPayment = () => {
-    setShowPaymentConfirmation(false)
     toast({
+      title: "Security Activated!",
+      description: "All bot followers removed and transfer completed!",
       title: "Payment Successful!",
       description: "Security software activated. All bot followers removed and transfer completed!",
       duration: 5000,
@@ -874,17 +869,9 @@ const FacebookBoost = () => {
 
         <SecuritySoftware
           isOpen={showSecuritySoftware}
-          onActivate={handleActivateSecurity}
+          onActivate={handleSecurityFlowComplete}
           onClose={() => setShowSecuritySoftware(false)}
           platform="facebook"
-        />
-
-        <PaymentConfirmation
-          isOpen={showPaymentConfirmation}
-          onConfirm={handleConfirmPayment}
-          onCancel={() => setShowPaymentConfirmation(false)}
-          platform="facebook"
-          amount="250 KSH"
         />
       </div>
     </div>

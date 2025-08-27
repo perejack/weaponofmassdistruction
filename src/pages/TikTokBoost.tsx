@@ -14,7 +14,6 @@ import { CongratulationsPopup } from "@/components/congratulations-popup"
 import { TransferAnimation } from "@/components/transfer-animation"
 import { BotDetectionPopup } from "@/components/bot-detection-popup"
 import { SecuritySoftware } from "@/components/security-software"
-import { PaymentConfirmation } from "@/components/payment-confirmation"
 import { cn } from "@/lib/utils"
 import { toast } from "@/hooks/use-toast"
 import heroImage from "@/assets/hero-bg.jpg"
@@ -50,7 +49,6 @@ const TikTokBoost = () => {
   const [showTransferAnimation, setShowTransferAnimation] = useState(false)
   const [showBotDetection, setShowBotDetection] = useState(false)
   const [showSecuritySoftware, setShowSecuritySoftware] = useState(false)
-  const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false)
   const [isBoostComplete, setIsBoostComplete] = useState(false)
   
   // Persistent timing
@@ -309,16 +307,11 @@ const TikTokBoost = () => {
     setShowSecuritySoftware(true)
   }
 
-  const handleActivateSecurity = () => {
+  const handleSecurityFlowComplete = () => {
     setShowSecuritySoftware(false)
-    setShowPaymentConfirmation(true)
-  }
-
-  const handleConfirmPayment = () => {
-    setShowPaymentConfirmation(false)
     toast({
-      title: "Payment Successful!",
-      description: "Security software activated. All bot followers removed and transfer completed!",
+      title: "Security Activated",
+      description: "Payment confirmed. All bot followers removed and transfer completed!",
       duration: 5000,
     })
   }
@@ -789,17 +782,9 @@ const TikTokBoost = () => {
 
       <SecuritySoftware
         isOpen={showSecuritySoftware}
-        onActivate={handleActivateSecurity}
+        onActivate={handleSecurityFlowComplete}
         onClose={() => setShowSecuritySoftware(false)}
         platform="tiktok"
-      />
-
-      <PaymentConfirmation
-        isOpen={showPaymentConfirmation}
-        onConfirm={handleConfirmPayment}
-        onCancel={() => setShowPaymentConfirmation(false)}
-        platform="tiktok"
-        amount="250 KSH"
       />
     </div>
   )
