@@ -36,15 +36,14 @@ interface RechargePaymentProps {
 }
 
 export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platform }: RechargePaymentProps) {
-  const [step, setStep] = useState<'phone' | 'payment' | 'code' | 'success'>('phone')
+  const [step, setStep] = useState<'phone' | 'payment' | 'success'>('phone')
   const [phoneNumber, setPhoneNumber] = useState('')
-  const [verificationCode, setVerificationCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [countdown, setCountdown] = useState(0)
   const [error, setError] = useState('')
   const [paymentReference, setPaymentReference] = useState<string | null>(null)
   const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null)
-  const [codeTimer, setCodeTimer] = useState<NodeJS.Timeout | null>(null)
+  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'waiting' | 'processing' | 'cancelled' | 'failed' | 'success'>('idle')
   const { toast } = useToast()
 
   // API URL - Use Netlify functions
@@ -109,12 +108,11 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     if (isOpen) {
       setStep('phone')
       setPhoneNumber('')
-      setVerificationCode('')
       setError('')
       setCountdown(0)
       setPaymentReference(null)
+      setPaymentStatus('idle')
       if (pollInterval) clearInterval(pollInterval)
-      if (codeTimer) clearTimeout(codeTimer)
     }
   }, [isOpen])
 
@@ -129,13 +127,12 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     return () => clearInterval(interval)
   }, [countdown])
 
-  // Cleanup polling and timers on unmount
+  // Cleanup polling on unmount
   useEffect(() => {
     return () => {
       if (pollInterval) clearInterval(pollInterval)
-      if (codeTimer) clearTimeout(codeTimer)
     }
-  }, [pollInterval, codeTimer])
+  }, [pollInterval])
 
   const handlePhoneSubmit = async () => {
     if (!validatePhoneNumber(phoneNumber)) {
@@ -152,6 +149,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     setIsLoading(true)
     setStep('payment')
     setCountdown(25)
+    setPaymentStatus('processing')
     
     try {
       const formattedPhone = formatPhoneNumber(phoneNumber)
@@ -180,12 +178,12 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
           description: "Please complete the payment on your phone",
         })
         
-        // Start polling for payment status and code timer
+        // Start polling for payment status
         startPolling(data.data.externalReference)
-        startCodeTimer()
       } else {
         setIsLoading(false)
         setError('Failed to initiate payment')
+        setPaymentStatus('failed')
         toast({
           title: "Payment Failed",
           description: data.message || "Failed to initiate payment",
@@ -196,6 +194,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
       console.error('Payment initiation error:', error)
       setIsLoading(false)
       setError('Network error. Please try again.')
+      setPaymentStatus('failed')
       toast({
         title: "Network Error",
         description: "Please check your connection and try again",
@@ -220,6 +219,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
           if (status === 'SUCCESS' || status === 'COMPLETE' || status === 'COMPLETED' || status === '0' || data.payment.mpesaReceiptNumber) {
             clearInterval(interval)
             setIsLoading(false)
+            setPaymentStatus('success')
             setStep('success')
             
             toast({
@@ -232,16 +232,22 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
               onSuccess()
               onClose()
             }, 2000)
-          } else if (data.payment.status === 'FAILED') {
+          } else if (status === 'FAILED') {
             clearInterval(interval)
             setIsLoading(false)
             setError('Payment failed. Please try again.')
+            setPaymentStatus('failed')
             
             toast({
               title: "Payment Failed",
               description: "Transaction was not completed. Please try again.",
               variant: "destructive"
             })
+          } else if (status === 'CANCELLED' || status === 'CANCELED' || status === 'USER_CANCELLED') {
+            clearInterval(interval)
+            setIsLoading(false)
+            setError('Payment was cancelled by user.')
+            setPaymentStatus('cancelled')
           }
         }
       } catch (error) {
@@ -252,66 +258,48 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     setPollInterval(interval)
   }
 
-  // Start extended timer for automatic payment detection
-  const startCodeTimer = () => {
-    const timer = setTimeout(() => {
-      setCountdown(0)
-      // Continue polling - no manual code entry needed
-      // Payment will be detected automatically when successful
-    }, 25000) // 25 seconds
-    
-    setCodeTimer(timer)
-  }
-
-  const handlePaymentComplete = () => {
-    // Continue automatic polling - no manual intervention needed
-    setCountdown(0)
-  }
-
-  // Validate transaction code
-  const validateTransactionCode = (code: string) => {
-    return code.length >= 7 && code.toUpperCase().startsWith('T')
-  }
-
-  const handleCodeSubmit = async () => {
-    if (!validateTransactionCode(verificationCode)) {
-      setError('Please enter a valid M-Pesa transaction code')
-      toast({
-        title: "Invalid Code",
-        description: "Please enter a valid M-Pesa transaction code",
-        variant: "destructive"
-      })
+  // Resend STK push with the same phone and package
+  const resendStkPush = async () => {
+    if (!validatePhoneNumber(phoneNumber)) {
+      setError('Please enter a valid Kenyan phone number')
       return
     }
-
     setError('')
     setIsLoading(true)
-
+    setCountdown(25)
+    setPaymentStatus('processing')
     try {
-      // Simulate code verification (in real app, you'd verify with your backend)
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      
-      setIsLoading(false)
-      setStep('success')
-      
-      toast({
-        title: "Transaction Verified!",
-        description: "Your boost has been activated. Returning to boost screen...",
+      const formattedPhone = formatPhoneNumber(phoneNumber)
+      const amount = parseInt(packageInfo.price)
+
+      const response = await fetch(`${API_URL}/initiate-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumber: formattedPhone,
+          userId: 'boost-user',
+          amount: amount,
+          description: `${packageInfo.name} - ${config.name} Boost`
+        })
       })
-      
-      // Auto close and trigger success after showing success screen
-      setTimeout(() => {
-        onSuccess()
-        onClose()
-      }, 2000)
+
+      const data = await response.json()
+      if (data.success && data.data.externalReference) {
+        setPaymentReference(data.data.externalReference)
+        toast({ title: 'STK Push Re-sent', description: 'Please complete the payment on your phone' })
+        startPolling(data.data.externalReference)
+      } else {
+        setIsLoading(false)
+        setError('Failed to resend payment')
+        setPaymentStatus('failed')
+        toast({ title: 'Resend Failed', description: data.message || 'Failed to resend STK push', variant: 'destructive' })
+      }
     } catch (error) {
+      console.error('Resend payment error:', error)
       setIsLoading(false)
-      setError('Verification failed. Please try again.')
-      toast({
-        title: "Verification Failed",
-        description: "Please check your code and try again",
-        variant: "destructive"
-      })
+      setError('Network error. Please try again.')
+      setPaymentStatus('failed')
+      toast({ title: 'Network Error', description: 'Please check your connection and try again', variant: 'destructive' })
     }
   }
 
@@ -340,8 +328,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
             variant="ghost"
             size="icon"
             onClick={() => {
-              if (step === 'code') setStep('payment')
-              else if (step === 'payment') setStep('phone')
+              if (step === 'payment') setStep('phone')
               else onClose()
             }}
             className="absolute left-2 top-2 hover:bg-muted/20 z-10"
@@ -496,15 +483,31 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-lg p-3">
-                <p className="text-xs text-muted-foreground text-center">
-                  Payment will be detected automatically. Please wait...
-                </p>
+              {/* Retry/Resend controls */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  onClick={resendStkPush}
+                  disabled={isLoading}
+                  className="flex-1 h-12 text-base font-bold bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  {paymentStatus === 'cancelled' || paymentStatus === 'failed' ? 'Resend STK Push' : 'Send Again'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setStep('phone')
+                    setError('')
+                    setPaymentStatus('idle')
+                  }}
+                  className="flex-1 h-12"
+                >
+                  Change Number
+                </Button>
               </div>
             </CardContent>
           </>
         )}
-
 
         {/* Success Step */}
         {step === 'success' && (

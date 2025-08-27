@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Input } from "@/components/ui/input"
+import { STKPush } from "@/components/stk-push"
 import { 
   Shield, 
   CheckCircle, 
@@ -43,8 +44,7 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
   const [isVerifying, setIsVerifying] = useState(false)
   const [showPayment, setShowPayment] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
-  const [paymentStep, setPaymentStep] = useState<"input" | "processing" | "success">("input")
-  const [checkoutRequestId, setCheckoutRequestId] = useState("")
+  const [showSTKPush, setShowSTKPush] = useState(false)
   const [verificationProgress, setVerificationProgress] = useState(0)
   const [phoneNumber, setPhoneNumber] = useState("")
   const [phoneError, setPhoneError] = useState("")
@@ -94,61 +94,25 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
     }
   }, [isVerifying])
 
+  // Auto-continue after success without requiring manual click
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => {
+        onVerify()
+      }, 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [showSuccess, onVerify])
+
   const handleStartVerification = () => {
     setIsVerifying(true)
     setVerificationStep(0)
     setVerificationProgress(0)
   }
 
-  const handleCompletePayment = async () => {
-    if (!validatePhoneNumber(phoneNumber)) {
-      setPhoneError("Please enter a valid Kenyan phone number")
-      return
-    }
-    
+  const handleCompletePayment = () => {
     setShowPayment(false)
-    setPaymentStep("processing")
-    setPhoneError("")
-    
-    try {
-      // Clean phone number - remove spaces and ensure it starts with 254
-      let cleanPhone = phoneNumber.replace(/\s/g, '')
-      if (cleanPhone.startsWith('0')) {
-        cleanPhone = '254' + cleanPhone.substring(1)
-      } else if (!cleanPhone.startsWith('254')) {
-        cleanPhone = '254' + cleanPhone
-      }
-      
-      // Initiate payment via Netlify function
-      const response = await fetch('/.netlify/functions/initiate-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          phoneNumber: cleanPhone,
-          amount: 20,
-          description: 'Account Verification Fee'
-        })
-      })
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        const requestId = data.data.checkoutRequestId || data.data.externalReference
-        setCheckoutRequestId(requestId)
-        
-        // Start polling for payment status
-        pollPaymentStatus(requestId)
-      } else {
-        throw new Error(data.message || 'Failed to initiate payment')
-      }
-    } catch (error) {
-      console.error('Payment error:', error)
-      setApiError(error.message || 'Failed to initiate payment')
-      setShowPayment(true)
-      setPaymentStep("input")
-    }
+    setShowSTKPush(true)
   }
 
   const validatePhoneNumber = (num: string) => {
@@ -358,101 +322,22 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
     )
   }
 
-  const pollPaymentStatus = async (requestId) => {
-    let attempts = 0
-    const maxAttempts = 50 // Poll for up to 50 attempts (25 seconds at 0.5s intervals)
-    
-    const checkStatus = async () => {
-      try {
-        const response = await fetch(`/.netlify/functions/payment-status/${requestId}`)
-        const data = await response.json()
-        
-        if (data.success && data.payment) {
-          if (data.payment.status === 'SUCCESS') {
-            setPaymentStep("success")
-            
-            // After 2 seconds, trigger success callback
-            setTimeout(() => {
-              setShowSuccess(true)
-            }, 2000)
-            return
-          } else if (data.payment.status === 'FAILED') {
-            throw new Error(data.payment.resultDesc || 'Payment failed')
-          }
-        }
-        
-        // Continue polling if still pending
-        attempts++
-        if (attempts < maxAttempts) {
-          setTimeout(checkStatus, 500) // Check every 0.5 seconds
-        } else {
-          throw new Error('Payment timeout - please try again')
-        }
-      } catch (error) {
-        console.error('Status check error:', error)
-        setApiError(error.message || 'Payment verification failed')
-        setShowPayment(true)
-        setPaymentStep("input")
-      }
-    }
-    
-    checkStatus()
-  }
-
-  // Payment Processing Screen
-  if (paymentStep === "processing") {
+  // STK Push Screen
+  if (showSTKPush) {
     return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[9999] p-2 sm:p-4">
-        <Card className="w-full max-w-sm border-2 border-green-500/50 bg-gradient-to-br from-card/95 to-background/95 backdrop-blur-xl shadow-2xl">
-          <CardContent className="p-6 text-center">
-            <div className="mx-auto mb-4 w-16 h-16 flex items-center justify-center">
-              <Loader2 className="w-12 h-12 text-green-400 animate-spin" />
-            </div>
-            
-            <h3 className="text-xl font-bold text-white mb-2">
-              Processing Payment
-            </h3>
-            <p className="text-sm text-gray-300 mb-4">
-              Check your phone for M-Pesa prompt
-            </p>
-            
-            <div className="p-3 bg-green-500/20 border border-green-500/30 rounded-lg">
-              <p className="text-green-100 text-xs">
-                Enter your M-Pesa PIN when prompted
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  // Payment Success Screen
-  if (paymentStep === "success") {
-    return (
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[9999] p-2 sm:p-4">
-        <Card className="w-full max-w-sm border-2 border-green-500/50 bg-gradient-to-br from-card/95 to-background/95 backdrop-blur-xl shadow-2xl">
-          <CardContent className="p-6 text-center">
-            <div className="mx-auto mb-4 w-16 h-16 flex items-center justify-center">
-              <div className="w-full h-full rounded-full bg-green-500 flex items-center justify-center">
-                <CheckCircle className="w-10 h-10 text-white" />
-              </div>
-            </div>
-            
-            <h3 className="text-xl font-bold text-white mb-2">
-              Payment Successful!
-            </h3>
-            <p className="text-sm text-gray-300 mb-4">
-              Activating verification...
-            </p>
-            
-            <div className="p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg">
-              <p className="text-blue-100 text-xs">
-                Please wait while we complete your verification
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[9999] p-2 sm:p-4">
+        <STKPush
+          amount={20}
+          onSuccess={(reference) => {
+            setShowSTKPush(false)
+            setShowSuccess(true)
+          }}
+          onCancel={() => {
+            setShowSTKPush(false)
+            setShowPayment(true)
+          }}
+          description="Social Media Boost Verification"
+        />
       </div>
     )
   }
@@ -567,36 +452,16 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
             
             {/* Action buttons */}
             <div className="space-y-3">
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Phone Number</label>
-                  <Input
-                    type="tel"
-                    placeholder="0712345678"
-                    value={phoneNumber}
-                    onChange={handlePhoneChange}
-                    className="h-12 border-2 border-green-500/30 focus:border-green-500"
-                  />
-                  {phoneError && (
-                    <p className="text-xs text-red-400">{phoneError}</p>
-                  )}
-                  {apiError && (
-                    <p className="text-xs text-red-400">{apiError}</p>
-                  )}
-                </div>
-                
-                <Button
-                  onClick={handleCompletePayment}
-                  disabled={!phoneNumber}
-                  variant="default"
-                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 h-12"
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Complete Verification - KSH 20
-                  <Crown className="w-4 h-4 ml-2 text-yellow-300" />
-                </Button>
-              </div>
-            
+              <Button
+                onClick={handleCompletePayment}
+                variant="default"
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 h-12"
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                Complete Verification - KSH 20
+                <Crown className="w-4 h-4 ml-2 text-yellow-300" />
+              </Button>
+              
               <Button
                 variant="outline"
                 onClick={onClose}
