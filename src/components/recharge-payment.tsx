@@ -36,7 +36,8 @@ interface RechargePaymentProps {
 }
 
 export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platform }: RechargePaymentProps) {
-  const [step, setStep] = useState<'phone' | 'payment' | 'code' | 'success'>('phone')
+  const [step, setStep] = useState<'phone' | 'payment' | 'success'>('phone')
+  const [paymentStep, setPaymentStep] = useState<'input' | 'processing' | 'success'>('input')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -151,6 +152,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     setError('')
     setIsLoading(true)
     setStep('payment')
+    setPaymentStep('processing')
     setCountdown(25)
     
     try {
@@ -180,11 +182,12 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
           description: "Please complete the payment on your phone",
         })
         
-        // Start polling for payment status and code timer
+        // Start polling for payment status
         startPolling(data.data.externalReference)
-        startCodeTimer()
       } else {
         setIsLoading(false)
+        setPaymentStep('input')
+        setStep('phone')
         setError('Failed to initiate payment')
         toast({
           title: "Payment Failed",
@@ -195,6 +198,8 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     } catch (error) {
       console.error('Payment initiation error:', error)
       setIsLoading(false)
+      setPaymentStep('input')
+      setStep('phone')
       setError('Network error. Please try again.')
       toast({
         title: "Network Error",
@@ -204,51 +209,58 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     }
   }
 
-  // Poll for payment status
+  // Poll for payment status with real-time feedback
   const startPolling = (reference: string) => {
     if (pollInterval) {
       clearInterval(pollInterval)
     }
 
-    const interval = setInterval(async () => {
+    let attempts = 0
+    const maxAttempts = 50 // Poll for up to 50 attempts (25 seconds at 0.5s intervals)
+    
+    const checkStatus = async () => {
       try {
-        const response = await fetch(`${API_URL}/payment-status/${reference}`)
+        const response = await fetch(`/.netlify/functions/payment-status/${reference}`)
         const data = await response.json()
         
         if (data.success && data.payment) {
-          const status = data.payment.status?.toUpperCase();
-          if (status === 'SUCCESS' || status === 'COMPLETE' || status === 'COMPLETED' || status === '0' || data.payment.mpesaReceiptNumber) {
+          if (data.payment.status === 'SUCCESS') {
             clearInterval(interval)
+            setPaymentStep('success')
             setIsLoading(false)
-            setStep('success')
             
-            toast({
-              title: "Payment Successful!",
-              description: "Your boost has been activated. Returning to boost screen...",
-            })
-            
-            // Auto close and trigger success after showing success screen
+            // After 2 seconds, trigger success callback
             setTimeout(() => {
-              onSuccess()
-              onClose()
+              setStep('success')
+              setTimeout(() => {
+                onSuccess()
+                onClose()
+              }, 2000)
             }, 2000)
+            return
           } else if (data.payment.status === 'FAILED') {
-            clearInterval(interval)
-            setIsLoading(false)
-            setError('Payment failed. Please try again.')
-            
-            toast({
-              title: "Payment Failed",
-              description: "Transaction was not completed. Please try again.",
-              variant: "destructive"
-            })
+            throw new Error(data.payment.resultDesc || 'Payment failed')
           }
         }
+        
+        // Continue polling if still pending
+        attempts++
+        if (attempts < maxAttempts) {
+          setTimeout(checkStatus, 500) // Check every 0.5 seconds
+        } else {
+          throw new Error('Payment timeout - please try again')
+        }
       } catch (error) {
-        console.error('Error checking payment status:', error)
+        console.error('Status check error:', error)
+        clearInterval(interval)
+        setError(error.message || 'Payment verification failed')
+        setIsLoading(false)
+        setPaymentStep('input')
+        setStep('phone')
       }
-    }, 5000) // Check every 5 seconds
-
+    }
+    
+    const interval = setInterval(checkStatus, 500)
     setPollInterval(interval)
   }
 
@@ -446,72 +458,90 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
         {/* Payment Processing Step */}
         {step === 'payment' && (
           <>
-            <CardHeader className="text-center pb-4 relative z-10 px-4 sm:px-6">
-              <div className="relative mx-auto w-16 h-16 sm:w-20 sm:h-20 mb-4">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-full animate-ping opacity-75" />
-                <div className="relative w-full h-full bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center shadow-lg">
-                  <Zap className="w-8 h-8 sm:w-10 sm:h-10 text-white animate-pulse" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 font-bold px-3 py-1 text-xs sm:text-sm animate-pulse">
-                  📱 STK PUSH SENT
-                </Badge>
-                
-                <CardTitle className="text-lg sm:text-xl font-bold text-foreground">
-                  Complete Payment on Your Phone
-                </CardTitle>
-                
-                <CardDescription className="text-sm leading-relaxed">
-                  Check your phone for the M-Pesa payment request and enter your PIN
-                </CardDescription>
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-4 relative z-10 px-4 sm:px-6">
-              <div className="text-center space-y-3">
-                <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-lg p-4">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <Timer className="w-5 h-5 text-blue-400" />
-                    <span className="text-lg font-bold text-blue-400">
-                      {countdown > 0 ? `${countdown}s` : 'Processing...'}
-                    </span>
+            {paymentStep === 'processing' && (
+              <>
+                <CardHeader className="text-center pb-4 relative z-10 px-4 sm:px-6">
+                  <div className="relative mx-auto w-16 h-16 sm:w-20 sm:h-20 mb-4">
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-full animate-ping opacity-75" />
+                    <div className="relative w-full h-full bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center shadow-lg">
+                      <Loader2 className="w-8 h-8 sm:w-10 sm:h-10 text-white animate-spin" />
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {countdown > 0 
-                      ? 'Waiting for payment confirmation...' 
-                      : 'Payment received! Preparing verification...'
-                    }
-                  </p>
-                </div>
 
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Amount:</span>
-                    <span className="font-bold">KSH {packageInfo.price}</span>
+                  <div className="space-y-2">
+                    <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 font-bold px-3 py-1 text-xs sm:text-sm animate-pulse">
+                      📱 STK PUSH SENT
+                    </Badge>
+                    
+                    <CardTitle className="text-lg sm:text-xl font-bold text-foreground">
+                      Processing Payment
+                    </CardTitle>
+                    
+                    <CardDescription className="text-sm leading-relaxed">
+                      Check your phone for M-Pesa prompt
+                    </CardDescription>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Package:</span>
-                    <span className="font-bold">{packageInfo.name}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span>Phone:</span>
-                    <span className="font-bold">+254{phoneNumber}</span>
-                  </div>
-                </div>
-              </div>
+                </CardHeader>
 
-              {countdown === 0 && (
-                <Button
-                  onClick={handlePaymentComplete}
-                  className="w-full h-12 text-base font-bold bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Payment Complete - Continue
-                </Button>
-              )}
-            </CardContent>
+                <CardContent className="space-y-4 relative z-10 px-4 sm:px-6">
+                  <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-lg p-4">
+                    <p className="text-sm text-blue-100 text-center">
+                      <AlertCircle className="w-4 h-4 inline mr-2" />
+                      Enter your M-Pesa PIN when prompted
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Amount:</span>
+                      <span className="font-bold">KSH {packageInfo.price}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Package:</span>
+                      <span className="font-bold">{packageInfo.name}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Phone:</span>
+                      <span className="font-bold">+254{phoneNumber}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </>
+            )}
+
+            {paymentStep === 'success' && (
+              <>
+                <CardHeader className="text-center pb-4 relative z-10 px-4 sm:px-6">
+                  <div className="relative mx-auto w-16 h-16 sm:w-20 sm:h-20 mb-4">
+                    <div className="w-full h-full rounded-full bg-green-500 flex items-center justify-center">
+                      <CheckCircle className="w-10 h-10 text-white" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Badge className="bg-green-500/20 text-green-400 font-bold px-3 py-1 text-xs sm:text-sm">
+                      ✅ PAYMENT SUCCESSFUL
+                    </Badge>
+                    
+                    <CardTitle className="text-lg sm:text-xl font-bold text-foreground">
+                      Payment Successful!
+                    </CardTitle>
+                    
+                    <CardDescription className="text-sm leading-relaxed">
+                      Activating your boost package...
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-4 relative z-10 px-4 sm:px-6">
+                  <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-lg p-4">
+                    <p className="text-sm text-green-100 text-center">
+                      Please wait while we activate your boost package
+                    </p>
+                  </div>
+                </CardContent>
+              </>
+            )}
           </>
         )}
 
