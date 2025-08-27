@@ -252,25 +252,19 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     setPollInterval(interval)
   }
 
-  // Start 25-second timer after payment processing
+  // Start extended timer for automatic payment detection
   const startCodeTimer = () => {
     const timer = setTimeout(() => {
       setCountdown(0)
-      // If payment hasn't succeeded by now, show code entry
-      if (step === 'payment') {
-        // Stop any loading state when moving to code entry
-        setIsLoading(false)
-        setStep('code')
-      }
+      // Continue polling - no manual code entry needed
+      // Payment will be detected automatically when successful
     }, 25000) // 25 seconds
     
     setCodeTimer(timer)
   }
 
   const handlePaymentComplete = () => {
-    // Stop loading and show code entry immediately
-    setIsLoading(false)
-    setStep('code')
+    // Continue automatic polling - no manual intervention needed
     setCountdown(0)
   }
 
@@ -502,100 +496,15 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
                 </div>
               </div>
 
-              {countdown === 0 && (
-                <Button
-                  onClick={handlePaymentComplete}
-                  className="w-full h-12 text-base font-bold bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-                >
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Payment Complete - Continue
-                </Button>
-              )}
-            </CardContent>
-          </>
-        )}
-
-        {/* Verification Code Step */}
-        {step === 'code' && (
-          <>
-            <CardHeader className="text-center pb-4 relative z-10 px-4 sm:px-6">
-              <div className="relative mx-auto w-16 h-16 sm:w-20 sm:h-20 mb-4">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full animate-pulse opacity-75" />
-                <div className="relative w-full h-full bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center shadow-lg">
-                  <Lock className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Badge variant="secondary" className="bg-purple-500/20 text-purple-400 font-bold px-3 py-1 text-xs sm:text-sm">
-                  🔐 VERIFICATION REQUIRED
-                </Badge>
-                
-                <CardTitle className="text-lg sm:text-xl font-bold text-foreground">
-                  Enter Transaction Code
-                </CardTitle>
-                
-                <CardDescription className="text-sm leading-relaxed">
-                  Enter the M-Pesa transaction code from your payment confirmation SMS
-                </CardDescription>
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-4 relative z-10 px-4 sm:px-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-purple-500" />
-                  Transaction Code
-                </label>
-                <Input
-                  type="text"
-                  placeholder="e.g. QGH7X8Y9Z1"
-                  value={verificationCode}
-                  onChange={(e) => {
-                    setVerificationCode(e.target.value.toUpperCase())
-                    setError('')
-                    // Reset loading state when user types
-                    if (isLoading) {
-                      setIsLoading(false)
-                    }
-                  }}
-                  className="h-12 text-base text-center font-mono tracking-wider border-2 border-purple-500/30 focus:border-purple-500 bg-background/50"
-                  maxLength={10}
-                />
-                {error && (
-                  <p className="text-xs text-red-400 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {error}
-                  </p>
-                )}
-              </div>
-
-              <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg p-3">
-                <p className="text-xs text-muted-foreground">
-                  💬 Check your SMS for a message like: "QGH7X8Y9Z1 Confirmed. You have received KSH {packageInfo.price}..."
+              <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground text-center">
+                  Payment will be detected automatically. Please wait...
                 </p>
               </div>
-
-              <Button
-                onClick={handleCodeSubmit}
-                disabled={!validateTransactionCode(verificationCode) || isLoading}
-                className="w-full h-12 text-base font-bold bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Verifying...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-5 h-5 mr-2" />
-                    Verify & Complete
-                  </>
-                )}
-              </Button>
             </CardContent>
           </>
         )}
+
 
         {/* Success Step */}
         {step === 'success' && (
