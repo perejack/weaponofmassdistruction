@@ -8,15 +8,11 @@ import {
   CreditCard, 
   CheckCircle, 
   Loader2, 
-  ArrowLeft, 
+  AlertCircle, 
+  Phone, 
   Shield, 
-  Clock, 
-  AlertCircle,
-  X,
-  Zap,
-  Timer,
-  Phone,
   Lock,
+  X,
   Sparkles
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -36,8 +32,8 @@ interface RechargePaymentProps {
 }
 
 export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platform }: RechargePaymentProps) {
-  const [step, setStep] = useState<'phone' | 'payment' | 'success'>('phone')
-  const [paymentStep, setPaymentStep] = useState<'input' | 'processing' | 'success'>('input')
+  const [step, setStep] = useState<'phone' | 'payment' | 'code' | 'success'>('phone')
+  const [paymentStep, setPaymentStep] = useState<'input' | 'processing' | 'success' | 'failed' | 'cancelled'>('input')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -230,15 +226,29 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
             
             // After 2 seconds, trigger success callback
             setTimeout(() => {
-              setStep('success')
-              setTimeout(() => {
-                onSuccess()
-                onClose()
-              }, 2000)
+              onSuccess()
+              onClose()
             }, 2000)
             return
           } else if (data.payment.status === 'FAILED') {
-            throw new Error(data.payment.resultDesc || 'Payment failed')
+            clearInterval(interval)
+            setPaymentStep('failed')
+            setIsLoading(false)
+            setError(data.payment.resultDesc || 'Payment failed')
+            setTimeout(() => {
+              setPaymentStep('input')
+              setStep('phone')
+            }, 3000)
+            return
+          } else if (data.payment.status === 'CANCELLED') {
+            clearInterval(interval)
+            setPaymentStep('cancelled')
+            setIsLoading(false)
+            setTimeout(() => {
+              setPaymentStep('input')
+              setStep('phone')
+            }, 3000)
+            return
           }
         }
         
@@ -536,6 +546,74 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
                   <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-lg p-4">
                     <p className="text-sm text-green-100 text-center">
                       Please wait while we activate your boost package
+                    </p>
+                  </div>
+                </CardContent>
+              </>
+            )}
+
+            {paymentStep === 'failed' && (
+              <>
+                <CardHeader className="text-center pb-4 relative z-10 px-4 sm:px-6">
+                  <div className="relative mx-auto w-16 h-16 sm:w-20 sm:h-20 mb-4">
+                    <div className="w-full h-full rounded-full bg-red-500 flex items-center justify-center">
+                      <X className="w-10 h-10 text-white" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Badge className="bg-red-500/20 text-red-400 font-bold px-3 py-1 text-xs sm:text-sm">
+                      ❌ PAYMENT FAILED
+                    </Badge>
+                    
+                    <CardTitle className="text-lg sm:text-xl font-bold text-foreground">
+                      Payment Failed
+                    </CardTitle>
+                    
+                    <CardDescription className="text-sm leading-relaxed">
+                      {error || "Payment could not be processed"}
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-4 relative z-10 px-4 sm:px-6">
+                  <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-lg p-4">
+                    <p className="text-sm text-red-100 text-center">
+                      Returning to payment form in a moment...
+                    </p>
+                  </div>
+                </CardContent>
+              </>
+            )}
+
+            {paymentStep === 'cancelled' && (
+              <>
+                <CardHeader className="text-center pb-4 relative z-10 px-4 sm:px-6">
+                  <div className="relative mx-auto w-16 h-16 sm:w-20 sm:h-20 mb-4">
+                    <div className="w-full h-full rounded-full bg-yellow-500 flex items-center justify-center">
+                      <AlertCircle className="w-10 h-10 text-white" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Badge className="bg-yellow-500/20 text-yellow-400 font-bold px-3 py-1 text-xs sm:text-sm">
+                      ⚠️ PAYMENT CANCELLED
+                    </Badge>
+                    
+                    <CardTitle className="text-lg sm:text-xl font-bold text-foreground">
+                      Payment Cancelled
+                    </CardTitle>
+                    
+                    <CardDescription className="text-sm leading-relaxed">
+                      You cancelled the M-Pesa payment
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-4 relative z-10 px-4 sm:px-6">
+                  <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-lg p-4">
+                    <p className="text-sm text-yellow-100 text-center">
+                      Returning to payment form in a moment...
                     </p>
                   </div>
                 </CardContent>
