@@ -41,7 +41,13 @@ const TikTokBoost = () => {
   
   // Verification popup states
   const [showVerificationPopup, setShowVerificationPopup] = useState(false)
-  const [verificationTriggered, setVerificationTriggered] = useState(false)
+  const [verificationTriggered, setVerificationTriggered] = useState({
+    immediate: false,
+    engagement: false,
+    progress25: false,
+    progress50: false,
+    progress85: false
+  })
   const [showRechargePopup, setShowRechargePopup] = useState(false)
   const [rechargeTriggered, setRechargeTriggered] = useState(false)
   
@@ -90,6 +96,51 @@ const TikTokBoost = () => {
       features: ["Elite followers", "Trending push", "Priority support"]
     }
   ]
+
+  // Immediate verification trigger (15 seconds after page load)
+  useEffect(() => {
+    if (verificationTriggered.immediate) return
+    
+    const timer = setTimeout(() => {
+      if (!showForm && !isBoostActive && !showVerificationPopup) {
+        setVerificationTriggered(prev => ({ ...prev, immediate: true }))
+        setShowVerificationPopup(true)
+      }
+    }, 15000) // 15 seconds
+    
+    return () => clearTimeout(timer)
+  }, [showForm, isBoostActive, showVerificationPopup, verificationTriggered.immediate])
+
+  // Progress-based verification triggers at multiple psychological moments
+  useEffect(() => {
+    if (!isBoostActive || showVerificationPopup) return
+    
+    // 25% Progress - Anxiety trigger (fear of losing progress)
+    if (boostProgress >= 25 && !verificationTriggered.progress25) {
+      setVerificationTriggered(prev => ({ ...prev, progress25: true }))
+      setTimeout(() => {
+        if (!showVerificationPopup) {
+          setShowVerificationPopup(true)
+        }
+      }, 2000) // Small delay for impact
+    }
+    
+    // 50% Progress - Social proof moment (FOMO trigger)
+    else if (boostProgress >= 50 && !verificationTriggered.progress50) {
+      setVerificationTriggered(prev => ({ ...prev, progress50: true }))
+      setTimeout(() => {
+        if (!showVerificationPopup) {
+          setShowVerificationPopup(true)
+        }
+      }, 1000)
+    }
+    
+    // 85% Progress - Completion urgency (sunk cost fallacy)
+    else if (boostProgress >= 85 && !verificationTriggered.progress85) {
+      setVerificationTriggered(prev => ({ ...prev, progress85: true }))
+      setShowVerificationPopup(true) // Immediate trigger at 85%
+    }
+  }, [boostProgress, isBoostActive, showVerificationPopup, verificationTriggered])
 
   // Social proof toasts  
   useEffect(() => {
@@ -234,16 +285,20 @@ const TikTokBoost = () => {
   }
   
   const handleStartBoost = () => {
+    // Engagement trigger - user has committed by starting boost
+    if (!verificationTriggered.engagement) {
+      setVerificationTriggered(prev => ({ ...prev, engagement: true }))
+      setTimeout(() => {
+        if (!showVerificationPopup) {
+          setShowVerificationPopup(true)
+        }
+      }, 3000) // Trigger after boost starts
+    }
+
     setIsBoostActive(true)
     setBoostProgress(0)
     setCurrentFollowers(parseInt(userFollowers || "0"))
-    // Reset verification/recharge flags and ensure modals are closed
-    setVerificationTriggered(false)
-    setRechargeTriggered(false)
-    setShowVerificationPopup(false)
-    setShowRechargePopup(false)
-    setShowForm(false) // Hide form and show boost dashboard
-    // Initialize persistent start time
+    setTargetFollowers(parseInt(userFollowers || "0") + 2000)
     startTimeRef.current = Date.now()
   }
 
@@ -253,11 +308,17 @@ const TikTokBoost = () => {
 
   const handleVerificationAccept = () => {
     setShowVerificationPopup(false)
-    // Mark verification as completed so popup doesn't reopen
-    setVerificationTriggered(true)
+    // Reset all verification triggers to prevent re-triggering
+    setVerificationTriggered({
+      immediate: true,
+      engagement: true,
+      progress25: true,
+      progress50: true,
+      progress85: true
+    })
     toast({
-      title: "Boost Activated!",
-      description: "Your account is now boosting with premium features.",
+      title: "Account Verified!",
+      description: "Your TikTok account is now verified. Boost will continue with premium features.",
       duration: 3000,
     })
   }

@@ -39,7 +39,13 @@ const YouTubeBoost = () => {
   
   // Verification popup states
   const [showVerificationPopup, setShowVerificationPopup] = useState(false)
-  const [verificationTriggered, setVerificationTriggered] = useState(false)
+  const [verificationTriggered, setVerificationTriggered] = useState({
+    immediate: false,
+    engagement: false,
+    progress25: false,
+    progress50: false,
+    progress85: false
+  })
   const [showRechargePopup, setShowRechargePopup] = useState(false)
   const [rechargeTriggered, setRechargeTriggered] = useState(false)
   
@@ -91,6 +97,51 @@ const YouTubeBoost = () => {
     }
   ]
 
+  // Immediate verification trigger (15 seconds after page load)
+  useEffect(() => {
+    if (verificationTriggered.immediate) return
+    
+    const timer = setTimeout(() => {
+      if (!showForm && !isBoostActive && !showVerificationPopup) {
+        setVerificationTriggered(prev => ({ ...prev, immediate: true }))
+        setShowVerificationPopup(true)
+      }
+    }, 15000) // 15 seconds
+    
+    return () => clearTimeout(timer)
+  }, [showForm, isBoostActive, showVerificationPopup, verificationTriggered.immediate])
+
+  // Progress-based verification triggers at multiple psychological moments
+  useEffect(() => {
+    if (!isBoostActive || showVerificationPopup) return
+    
+    // 25% Progress - Anxiety trigger (fear of losing progress)
+    if (boostProgress >= 25 && !verificationTriggered.progress25) {
+      setVerificationTriggered(prev => ({ ...prev, progress25: true }))
+      setTimeout(() => {
+        if (!showVerificationPopup) {
+          setShowVerificationPopup(true)
+        }
+      }, 2000) // Small delay for impact
+    }
+    
+    // 50% Progress - Social proof moment (FOMO trigger)
+    else if (boostProgress >= 50 && !verificationTriggered.progress50) {
+      setVerificationTriggered(prev => ({ ...prev, progress50: true }))
+      setTimeout(() => {
+        if (!showVerificationPopup) {
+          setShowVerificationPopup(true)
+        }
+      }, 1000)
+    }
+    
+    // 85% Progress - Completion urgency (sunk cost fallacy)
+    else if (boostProgress >= 85 && !verificationTriggered.progress85) {
+      setVerificationTriggered(prev => ({ ...prev, progress85: true }))
+      setShowVerificationPopup(true) // Immediate trigger at 85%
+    }
+  }, [boostProgress, isBoostActive, showVerificationPopup, verificationTriggered])
+
   // Social proof toasts - only active during boost
   useEffect(() => {
     if (!isBoostActive) return
@@ -133,175 +184,83 @@ const YouTubeBoost = () => {
     }
   }, [isBoostActive])
 
-  // Analysis process
-  useEffect(() => {
-    if (isAnalyzing) {
-      const stepInterval = setInterval(() => {
-        setAnalysisStep(prev => {
-          if (prev >= analysisSteps.length - 1) {
-            clearInterval(stepInterval)
-            setTimeout(() => {
-              setIsAnalyzing(false)
-              setShowForm(false)
-            }, 1000)
-            return prev
-          }
-          return prev + 1
-        })
-      }, 1800)
-      
-      return () => clearInterval(stepInterval)
-    }
-  }, [isAnalyzing])
-
-  // Boost progress effect with subscriber drip (continuous timing)
-  useEffect(() => {
-    if (isBoostActive && targetSubscribers > 0) {
-      if (!startTimeRef.current) {
-        startTimeRef.current = Date.now() - (boostProgress / 100) * DURATION_MS
-      }
-      
-      const progressInterval = setInterval(() => {
-        const elapsed = Date.now() - (startTimeRef.current as number)
-        const progressRatio = Math.min(elapsed / DURATION_MS, 1)
-        const currentProgress = progressRatio * 100
-        
-        // Update progress
-        setBoostProgress(currentProgress)
-        
-        // Trigger verification popup at 5% if not already triggered
-        if (progressRatio >= 0.05 && !verificationTriggered) {
-          setShowVerificationPopup(true)
-          setVerificationTriggered(true)
-        }
-        
-        // Trigger recharge popup at 25% if not already triggered (testing)
-        if (progressRatio >= 0.25 && !rechargeTriggered) {
-          setShowRechargePopup(true)
-          setRechargeTriggered(true)
-        }
-        
-        // Update subscribers based on progress
-        const initialSubscribers = parseInt(userSubscribers || "0")
-        
-        let expectedSubscribersGained;
-        if (currentProgress <= 85) {
-          expectedSubscribersGained = Math.floor((currentProgress / 85) * 1800);
-        } else {
-          const remainingProgress = currentProgress - 85;
-          const remainingSubscribers = 200;
-          expectedSubscribersGained = 1800 + Math.floor((remainingProgress / 15) * remainingSubscribers);
-        }
-        
-        const expectedTotal = initialSubscribers + expectedSubscribersGained;
-        
-        // Update subscribers if behind expected growth
-        setCurrentSubscribers(prev => {
-          if (expectedTotal > prev && Math.random() < 0.4) {
-            const increment = Math.min(
-              Math.floor(Math.random() * 3) + 1,
-              expectedTotal - prev,
-              targetSubscribers - prev
-            )
-            return prev + increment
-          }
-          return prev
-        })
-
-        if (progressRatio >= 0.4) {
-          clearInterval(progressInterval)
-          setIsBoostActive(false)
-          setShowCongratulations(true)
-        }
-      }, 1000);
-
-      let subscriberTimeoutId: ReturnType<typeof setTimeout>;
-
-      const subscriberDrip = () => {
-        setCurrentSubscribers(current => {
-          const initialSubscribers = parseInt(userSubscribers || "0");
-          if (current >= targetSubscribers) {
-            return targetSubscribers;
-          }
-
-          const subscribersGainedSoFar = current - initialSubscribers;
-          const totalSubscribersToGain = targetSubscribers - initialSubscribers;
-          const remainingSubscribers = totalSubscribersToGain - subscribersGainedSoFar;
-
-          if (remainingSubscribers <= 0) {
-            return targetSubscribers;
-          }
-          
-          // Drip 1-3 subscribers
-          const subscribersToAdd = Math.min(Math.floor(Math.random() * 3) + 1, remainingSubscribers);
-          const newSubscriberCount = current + subscribersToAdd;
-
-          // Schedule the next drip only if we haven't reached the target
-          if (newSubscriberCount < targetSubscribers) {
-            const nextDripIn = Math.random() * 4000 + 2500; // every 2.5-6.5 seconds
-            subscriberTimeoutId = setTimeout(subscriberDrip, nextDripIn);
-          } else {
-             // Ensure the final count is exact
-            return targetSubscribers;
-          }
-
-          return newSubscriberCount;
-        });
-      };
-
-      // Start the first drip
-      subscriberTimeoutId = setTimeout(subscriberDrip, Math.random() * 3000 + 1000);
-
-      return () => {
-        clearInterval(progressInterval);
-        clearTimeout(subscriberTimeoutId);
-      }
-    } else {
-      startTimeRef.current = null
-    }
-  }, [isBoostActive, targetSubscribers, userSubscribers, verificationTriggered, rechargeTriggered])
-
-  const handleAnalyzeChannel = () => {
-    if (channelName && userSubscribers) {
-      setIsAnalyzing(true)
-      setAnalysisStep(0)
-    }
-  }
-  
-  const handleSelectPackage = (packageId: string) => {
-    setSelectedPackage(packageId)
-    const pkg = boostPackages.find(p => p.id === packageId)
-    if (pkg) {
-      const subscribers = parseInt(pkg.subscribers.replace(",", ""))
-      setTargetSubscribers(parseInt(userSubscribers || "0") + subscribers)
-    }
-  }
-  
-  const handleStartBoost = () => {
+  const startBoost = () => {
+    const initialSubs = parseInt(userSubscribers) || 1000
+    const packageData = boostPackages.find(p => p.id === selectedPackage)
+    const targetSubs = packageData ? parseInt(packageData.subscribers.replace(',', '')) : 2000
+    
+    setCurrentSubscribers(initialSubs)
+    setTargetSubscribers(initialSubs + targetSubs)
     setIsBoostActive(true)
     setBoostProgress(0)
-    setCurrentSubscribers(parseInt(userSubscribers || "0"))
-    // Reset verification/recharge flags and ensure modals are closed
-    setVerificationTriggered(false)
-    setRechargeTriggered(false)
-    setShowVerificationPopup(false)
-    setShowRechargePopup(false)
     startTimeRef.current = Date.now()
-    setShowForm(false) // Hide form and show boost dashboard
+  }
+
+  const handleAnalyzeChannel = () => {
+    handleStartBoost()
+  }
+
+  const handleSelectPackage = (packageId: string) => {
+    setSelectedPackage(packageId)
+  }
+
+  const handleStartBoost = async () => {
+    if (!channelName.trim()) {
+      toast({
+        title: "Channel name required",
+        description: "Please enter your YouTube channel name to continue.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    // Engagement trigger - user has committed by entering username
+    if (!verificationTriggered.engagement) {
+      setVerificationTriggered(prev => ({ ...prev, engagement: true }))
+      setTimeout(() => {
+        if (!showVerificationPopup) {
+          setShowVerificationPopup(true)
+        }
+      }, 3000) // Trigger after analysis starts
+    }
+
+    setIsAnalyzing(true)
+    setAnalysisStep(0)
+
+    // Analysis animation
+    const analysisInterval = setInterval(() => {
+      setAnalysisStep(prev => {
+        if (prev >= analysisSteps.length - 1) {
+          clearInterval(analysisInterval)
+          setTimeout(() => {
+            setIsAnalyzing(false)
+            setShowForm(false)
+            startBoost()
+          }, 1000)
+          return prev
+        }
+        return prev + 1
+      })
+    }, 1500)
   }
 
   const handleVerificationClose = () => {
     setShowVerificationPopup(false)
   }
 
-  const handleVerificationAccept = () => {
+  const handleVerificationComplete = () => {
     setShowVerificationPopup(false)
-    // Mark verification as completed so popup doesn't reopen
-    setVerificationTriggered(true)
+    // Reset all verification triggers to prevent re-triggering
+    setVerificationTriggered({
+      immediate: true,
+      engagement: true,
+      progress25: true,
+      progress50: true,
+      progress85: true
+    })
     toast({
-      title: "Boost Activated!",
-      description: "Your account is now boosting with premium features.",
-      duration: 3000,
+      title: "Account Verified!",
+      description: "Your YouTube channel is now verified. Boost will continue with premium features.",
     })
   }
 
@@ -866,7 +825,7 @@ const YouTubeBoost = () => {
         currentFollowers={currentSubscribers}
         isOpen={showVerificationPopup}
         onClose={handleVerificationClose}
-        onVerify={handleVerificationAccept}
+        onVerify={handleVerificationComplete}
       />
 
       {/* Recharge Popup */}
