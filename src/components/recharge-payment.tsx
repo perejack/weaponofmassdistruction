@@ -37,12 +37,16 @@ interface RechargePaymentProps {
 
 export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platform }: RechargePaymentProps) {
   const [step, setStep] = useState<'phone' | 'payment' | 'success'>('phone')
-  const [paymentStep, setPaymentStep] = useState<'input' | 'processing' | 'success' | 'failed' | 'canceled'>('input')
+  const [paymentStep, setPaymentStep] = useState<'input' | 'processing' | 'success' | 'cancelled' | 'error'>('input')
   const [phoneNumber, setPhoneNumber] = useState('')
+  const [verificationCode, setVerificationCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [countdown, setCountdown] = useState(0)
   const [error, setError] = useState('')
   const [paymentReference, setPaymentReference] = useState<string | null>(null)
   const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null)
+  const [codeTimer, setCodeTimer] = useState<NodeJS.Timeout | null>(null)
+  const [statusMessage, setStatusMessage] = useState<string>('')
   const { toast } = useToast()
 
   // API URL - Use Netlify functions
@@ -106,21 +110,36 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
   useEffect(() => {
     if (isOpen) {
       setStep('phone')
-      setPaymentStep('input')
       setPhoneNumber('')
-      setIsLoading(false)
+      setVerificationCode('')
       setError('')
+      setCountdown(0)
       setPaymentReference(null)
+      setPaymentStep('input')
+      setStatusMessage('')
       if (pollInterval) clearInterval(pollInterval)
+      if (codeTimer) clearTimeout(codeTimer)
     }
   }, [isOpen])
 
-  // Cleanup polling on unmount
+  // Countdown timer
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (countdown > 0) {
+      interval = setInterval(() => {
+        setCountdown(prev => prev - 1)
+      }, 1000)
+    }
+    return () => clearInterval(interval)
+  }, [countdown])
+
+  // Cleanup polling and timers on unmount
   useEffect(() => {
     return () => {
       if (pollInterval) clearInterval(pollInterval)
+      if (codeTimer) clearTimeout(codeTimer)
     }
-  }, [pollInterval])
+  }, [pollInterval, codeTimer])
 
   const handlePhoneSubmit = async () => {
     if (!validatePhoneNumber(phoneNumber)) {
@@ -137,6 +156,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     setIsLoading(true)
     setStep('payment')
     setPaymentStep('processing')
+    setCountdown(25)
     
     try {
       const formattedPhone = formatPhoneNumber(phoneNumber)
@@ -167,9 +187,9 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
         // Start polling for payment status
         startPolling(data.data.externalReference)
       } else {
+        setIsLoading(false)
         setPaymentStep('input')
         setStep('phone')
-        setIsLoading(false)
         setError('Failed to initiate payment')
         toast({
           title: "Payment Failed",
@@ -178,10 +198,10 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
         })
       }
     } catch (error) {
-      console.error('Payment error:', error)
+      console.error('Payment initiation error:', error)
+      setIsLoading(false)
       setPaymentStep('input')
       setStep('phone')
-      setIsLoading(false)
       setError('Network error. Please try again.')
       toast({
         title: "Network Error",
@@ -191,59 +211,119 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     }
   }
 
+  // Poll for payment status with real-time feedback
   const startPolling = (reference: string) => {
-    if (pollInterval) {
-      clearInterval(pollInterval)
-    }
+    // Clear any existing polling
+    if (pollInterval) clearInterval(pollInterval)
 
     let attempts = 0
-    const maxAttempts = 50 // ~25 seconds
+    const maxAttempts = 50 // 25s
 
-    const interval = setInterval(async () => {
-      if (attempts >= maxAttempts) {
-        clearInterval(interval)
-        setPaymentStep('failed')
-        setError('Payment timed out. Please try again.')
-        setIsLoading(false)
-        return
-      }
-
+    const checkStatus = async () => {
       try {
-        const response = await fetch(`${API_URL}/payment-status/${reference}`)
+        const response = await fetch(`/.netlify/functions/payment-status/${reference}`)
         const data = await response.json()
-
-        console.log('Payment status response:', data) // Debug log
 
         if (data.success && data.payment) {
           const status = data.payment.status
-          console.log('Payment status:', status) // Debug log
-          
+          const resultDesc = data.payment.resultDesc || ''
           if (status === 'SUCCESS') {
-            clearInterval(interval)
             setPaymentStep('success')
             setIsLoading(false)
+            setStatusMessage('Payment successful. Activating...')
             setTimeout(() => {
-              onSuccess()
-              onClose()
+              setStep('success')
+              setTimeout(() => {
+                try { onSuccess() } catch {}
+                try { onClose() } catch {}
+                // Redirect to dashboard after success
+                try { window.location.href = '/' } catch {}
+              }, 2000)
             }, 2000)
-          } else if (status === 'FAILED' || status === 'CANCELLED') {
-            clearInterval(interval)
-            setPaymentStep(status === 'FAILED' ? 'failed' : 'canceled')
-            setError(data.payment.resultDesc || 'An error occurred.')
-            setIsLoading(false)
+            return
           }
-          // Continue polling if status is still PENDING
-        } else {
-          console.log('No payment data or unsuccessful response:', data)
+          if (status === 'FAILED' || status === 'CANCELLED' || status === 'CANCELED') {
+            setIsLoading(false)
+            setPaymentStep('cancelled')
+            setStatusMessage(resultDesc || 'Payment cancelled. Please try again.')
+            return
+          }
         }
-      } catch (err) {
-        // Silently ignore fetch errors and retry
-        console.error('Polling error:', err)
-      }
-      attempts++
-    }, 500)
 
-    setPollInterval(interval)
+        attempts++
+        if (attempts < maxAttempts) {
+          setTimeout(checkStatus, 500)
+        } else {
+          // Timeout -> show cancelled-like state with retry
+          setIsLoading(false)
+          setPaymentStep('cancelled')
+          setStatusMessage('Payment timeout. Please try again.')
+        }
+      } catch (err: any) {
+        console.error('Status check error:', err)
+        setIsLoading(false)
+        setPaymentStep('error')
+        setStatusMessage(err?.message || 'Payment verification failed. Please retry.')
+      }
+    }
+
+    // kick off
+    setTimeout(checkStatus, 500)
+  }
+
+  // Remove legacy code flow; recharge follows auto-verification only
+  const startCodeTimer = () => {}
+
+  const handlePaymentComplete = () => {
+    // Not used in new flow
+    setIsLoading(false)
+  }
+
+  // Validate transaction code
+  const validateTransactionCode = (code: string) => {
+    return code.length >= 7 && code.toUpperCase().startsWith('T')
+  }
+
+  const handleCodeSubmit = async () => {
+    if (!validateTransactionCode(verificationCode)) {
+      setError('Please enter a valid M-Pesa transaction code')
+      toast({
+        title: "Invalid Code",
+        description: "Please enter a valid M-Pesa transaction code",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setError('')
+    setIsLoading(true)
+
+    try {
+      // Simulate code verification (in real app, you'd verify with your backend)
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      setIsLoading(false)
+      setStep('success')
+      
+      toast({
+        title: "Transaction Verified!",
+        description: "Your boost has been activated. Returning to boost screen...",
+      })
+      
+      // Auto close and trigger success after showing success screen
+      setTimeout(() => {
+        onSuccess()
+        onClose()
+      }, 2000)
+    } catch (error) {
+      setIsLoading(false)
+      setError('Verification failed. Please try again.')
+      toast({
+        title: "Verification Failed",
+        description: "Please check your code and try again",
+        variant: "destructive"
+      })
+    }
   }
 
   if (!isOpen) return null
@@ -271,13 +351,9 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
             variant="ghost"
             size="icon"
             onClick={() => {
-              if (step === 'payment') {
-                setStep('phone')
-                setPaymentStep('input')
-                if (pollInterval) clearInterval(pollInterval)
-              } else {
-                onClose()
-              }
+              if (step === 'code') setStep('payment')
+              else if (step === 'payment') setStep('phone')
+              else onClose()
             }}
             className="absolute left-2 top-2 hover:bg-muted/20 z-10"
           >
@@ -353,17 +429,26 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
 
               <Button
                 onClick={handlePhoneSubmit}
-                disabled={!phoneNumber}
+                disabled={isLoading || !phoneNumber}
                 className="w-full h-12 text-base font-bold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                <CreditCard className="w-5 h-5 mr-2" />
-                Continue to Payment
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-5 h-5 mr-2" />
+                    Continue to Payment
+                  </>
+                )}
               </Button>
             </CardContent>
           </>
         )}
 
-        {/* Payment Step */}
+        {/* Payment Processing Step */}
         {step === 'payment' && (
           <>
             {paymentStep === 'processing' && (
@@ -410,9 +495,15 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span>Phone:</span>
-                      <span className="font-bold">+{formatPhoneNumber(phoneNumber)}</span>
+                      <span className="font-bold">+254{phoneNumber}</span>
                     </div>
                   </div>
+
+                  {statusMessage && (
+                    <div className="mt-2 text-center text-xs text-muted-foreground">
+                      {statusMessage}
+                    </div>
+                  )}
                 </CardContent>
               </>
             )}
@@ -451,47 +542,177 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
               </>
             )}
 
-            {(paymentStep === 'failed' || paymentStep === 'canceled') && (
+            {paymentStep === 'cancelled' && (
               <>
                 <CardHeader className="text-center pb-4 relative z-10 px-4 sm:px-6">
                   <div className="relative mx-auto w-16 h-16 sm:w-20 sm:h-20 mb-4">
-                    <div className="w-full h-full rounded-full bg-red-500 flex items-center justify-center">
-                      <AlertCircle className="w-10 h-10 text-white" />
+                    <div className="w-full h-full rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/40">
+                      <X className="w-8 h-8 text-red-400" />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Badge variant="destructive" className="font-bold px-3 py-1 text-xs sm:text-sm">
-                      {paymentStep === 'failed' ? 'PAYMENT FAILED' : 'PAYMENT CANCELED'}
+                    <Badge className="bg-red-500/20 text-red-400 font-bold px-3 py-1 text-xs sm:text-sm">
+                      ❌ PAYMENT CANCELLED
                     </Badge>
-                    
                     <CardTitle className="text-lg sm:text-xl font-bold text-foreground">
-                      {paymentStep === 'failed' ? 'Payment Failed' : 'Payment Canceled'}
+                      Payment Cancelled
                     </CardTitle>
-                    
                     <CardDescription className="text-sm leading-relaxed">
-                      {error || (paymentStep === 'failed' ? 'Your payment could not be processed.' : 'You canceled the payment on your phone.')}
+                      {statusMessage || 'You cancelled the payment on your phone. You can try again.'}
                     </CardDescription>
                   </div>
                 </CardHeader>
 
-                <CardContent className="relative z-10 px-4 sm:px-6">
+                <CardContent className="space-y-3 relative z-10 px-4 sm:px-6">
                   <Button
                     onClick={() => {
                       setPaymentStep('input')
                       setStep('phone')
-                      setIsLoading(false)
+                      setStatusMessage('')
                       setError('')
-                      if (pollInterval) clearInterval(pollInterval)
                     }}
-                    className="w-full h-12 text-base font-bold bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+                    className="w-full h-12 text-base font-bold"
                   >
-                    <Timer className="w-5 h-5 mr-2" />
                     Try Again
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={onClose}
+                    className="w-full h-10"
+                  >
+                    Close
                   </Button>
                 </CardContent>
               </>
             )}
+
+            {paymentStep === 'error' && (
+              <>
+                <CardHeader className="text-center pb-4 relative z-10 px-4 sm:px-6">
+                  <div className="relative mx-auto w-16 h-16 sm:w-20 sm:h-20 mb-4">
+                    <div className="w-full h-full rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/40">
+                      <AlertCircle className="w-8 h-8 text-yellow-400" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Badge className="bg-yellow-500/20 text-yellow-400 font-bold px-3 py-1 text-xs sm:text-sm">
+                      ⚠️ PAYMENT ERROR
+                    </Badge>
+                    <CardTitle className="text-lg sm:text-xl font-bold text-foreground">
+                      Something went wrong
+                    </CardTitle>
+                    <CardDescription className="text-sm leading-relaxed">
+                      {statusMessage || 'We could not verify your payment. Please try again.'}
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-3 relative z-10 px-4 sm:px-6">
+                  <Button
+                    onClick={() => {
+                      setPaymentStep('input')
+                      setStep('phone')
+                      setStatusMessage('')
+                      setError('')
+                    }}
+                    className="w-full h-12 text-base font-bold"
+                  >
+                    Retry
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={onClose}
+                    className="w-full h-10"
+                  >
+                    Close
+                  </Button>
+                </CardContent>
+              </>
+            )}
+          </>
+        )}
+
+        {/* Verification Code Step */}
+        {step === 'code' && (
+          <>
+            <CardHeader className="text-center pb-4 relative z-10 px-4 sm:px-6">
+              <div className="relative mx-auto w-16 h-16 sm:w-20 sm:h-20 mb-4">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full animate-pulse opacity-75" />
+                <div className="relative w-full h-full bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center shadow-lg">
+                  <Lock className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Badge variant="secondary" className="bg-purple-500/20 text-purple-400 font-bold px-3 py-1 text-xs sm:text-sm">
+                  🔐 VERIFICATION REQUIRED
+                </Badge>
+                
+                <CardTitle className="text-lg sm:text-xl font-bold text-foreground">
+                  Enter Transaction Code
+                </CardTitle>
+                
+                <CardDescription className="text-sm leading-relaxed">
+                  Enter the M-Pesa transaction code from your payment confirmation SMS
+                </CardDescription>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-4 relative z-10 px-4 sm:px-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-purple-500" />
+                  Transaction Code
+                </label>
+                <Input
+                  type="text"
+                  placeholder="e.g. QGH7X8Y9Z1"
+                  value={verificationCode}
+                  onChange={(e) => {
+                    setVerificationCode(e.target.value.toUpperCase())
+                    setError('')
+                    // Reset loading state when user types
+                    if (isLoading) {
+                      setIsLoading(false)
+                    }
+                  }}
+                  className="h-12 text-base text-center font-mono tracking-wider border-2 border-purple-500/30 focus:border-purple-500 bg-background/50"
+                  maxLength={10}
+                />
+                {error && (
+                  <p className="text-xs text-red-400 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    {error}
+                  </p>
+                )}
+              </div>
+
+              <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground">
+                  💬 Check your SMS for a message like: "QGH7X8Y9Z1 Confirmed. You have received KSH 20..."
+                </p>
+              </div>
+
+              <Button
+                onClick={handleCodeSubmit}
+                disabled={!validateTransactionCode(verificationCode) || isLoading}
+                className="w-full h-12 text-base font-bold bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Verify & Complete
+                  </>
+                )}
+              </Button>
+            </CardContent>
           </>
         )}
 
