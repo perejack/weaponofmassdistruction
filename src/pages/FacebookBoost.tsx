@@ -325,10 +325,11 @@ const FacebookBoost = () => {
 
   const handlePaymentSuccess = () => {
     setShowPhonePayment(false)
+    setShowTransferAnimation(true)
     toast({
       title: "Security Tool Activated!",
-      description: "Bots removed and transfer completed successfully.",
-      duration: 5000,
+      description: "Starting secure transfer...",
+      duration: 3000,
     })
   }
 
