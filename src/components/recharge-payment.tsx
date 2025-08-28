@@ -39,6 +39,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
   const [step, setStep] = useState<'phone' | 'payment' | 'success'>('phone')
   const [paymentStep, setPaymentStep] = useState<'input' | 'processing' | 'success' | 'failed' | 'canceled'>('input')
   const [phoneNumber, setPhoneNumber] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [paymentReference, setPaymentReference] = useState<string | null>(null)
   const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null)
@@ -104,7 +105,10 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
   // Reset state when popup opens
   useEffect(() => {
     if (isOpen) {
+      setStep('phone')
+      setPaymentStep('input')
       setPhoneNumber('')
+      setIsLoading(false)
       setError('')
       setPaymentReference(null)
       if (pollInterval) clearInterval(pollInterval)
@@ -130,6 +134,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     }
 
     setError('')
+    setIsLoading(true)
     setStep('payment')
     setPaymentStep('processing')
     
@@ -164,6 +169,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
       } else {
         setPaymentStep('input')
         setStep('phone')
+        setIsLoading(false)
         setError('Failed to initiate payment')
         toast({
           title: "Payment Failed",
@@ -172,9 +178,10 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
         })
       }
     } catch (error) {
-      console.error('Payment initiation error:', error)
+      console.error('Payment error:', error)
       setPaymentStep('input')
       setStep('phone')
+      setIsLoading(false)
       setError('Network error. Please try again.')
       toast({
         title: "Network Error",
@@ -197,6 +204,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
         clearInterval(interval)
         setPaymentStep('failed')
         setError('Payment timed out. Please try again.')
+        setIsLoading(false)
         return
       }
 
@@ -204,11 +212,16 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
         const response = await fetch(`${API_URL}/payment-status/${reference}`)
         const data = await response.json()
 
+        console.log('Payment status response:', data) // Debug log
+
         if (data.success && data.payment) {
           const status = data.payment.status
+          console.log('Payment status:', status) // Debug log
+          
           if (status === 'SUCCESS') {
             clearInterval(interval)
             setPaymentStep('success')
+            setIsLoading(false)
             setTimeout(() => {
               onSuccess()
               onClose()
@@ -217,7 +230,11 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
             clearInterval(interval)
             setPaymentStep(status === 'FAILED' ? 'failed' : 'canceled')
             setError(data.payment.resultDesc || 'An error occurred.')
+            setIsLoading(false)
           }
+          // Continue polling if status is still PENDING
+        } else {
+          console.log('No payment data or unsuccessful response:', data)
         }
       } catch (err) {
         // Silently ignore fetch errors and retry
@@ -463,7 +480,9 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
                     onClick={() => {
                       setPaymentStep('input')
                       setStep('phone')
+                      setIsLoading(false)
                       setError('')
+                      if (pollInterval) clearInterval(pollInterval)
                     }}
                     className="w-full h-12 text-base font-bold bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
                   >
