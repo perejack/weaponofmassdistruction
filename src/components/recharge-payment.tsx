@@ -217,7 +217,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     if (pollInterval) clearInterval(pollInterval)
 
     let attempts = 0
-    const maxAttempts = 50 // 25s
+    const maxAttempts = 50 // 25s at 0.5s intervals
 
     const checkStatus = async () => {
       try {
@@ -227,7 +227,9 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
         if (data.success && data.payment) {
           const status = data.payment.status
           const resultDesc = data.payment.resultDesc || ''
+          
           if (status === 'SUCCESS') {
+            if (pollInterval) clearInterval(pollInterval)
             setPaymentStep('success')
             setIsLoading(false)
             setStatusMessage('Payment successful. Activating...')
@@ -242,7 +244,9 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
             }, 2000)
             return
           }
+          
           if (status === 'FAILED' || status === 'CANCELLED' || status === 'CANCELED') {
+            if (pollInterval) clearInterval(pollInterval)
             setIsLoading(false)
             setPaymentStep('cancelled')
             setStatusMessage(resultDesc || 'Payment cancelled. Please try again.')
@@ -251,24 +255,25 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
         }
 
         attempts++
-        if (attempts < maxAttempts) {
-          setTimeout(checkStatus, 500)
-        } else {
+        if (attempts >= maxAttempts) {
           // Timeout -> show cancelled-like state with retry
+          if (pollInterval) clearInterval(pollInterval)
           setIsLoading(false)
           setPaymentStep('cancelled')
           setStatusMessage('Payment timeout. Please try again.')
         }
       } catch (err: any) {
         console.error('Status check error:', err)
+        if (pollInterval) clearInterval(pollInterval)
         setIsLoading(false)
         setPaymentStep('error')
         setStatusMessage(err?.message || 'Payment verification failed. Please retry.')
       }
     }
 
-    // kick off
-    setTimeout(checkStatus, 500)
+    // Start polling with proper interval
+    const interval = setInterval(checkStatus, 500)
+    setPollInterval(interval)
   }
 
   // Remove legacy code flow; recharge follows auto-verification only
