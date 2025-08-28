@@ -175,10 +175,10 @@ export function RechargePopup({ isOpen, onClose, onRecharge, platform, currentFo
             <div className="bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-xl p-3 sm:p-4">
               <div className="flex items-center justify-between mb-2 sm:mb-3">
                 <span className="text-xs sm:text-sm font-medium text-foreground">Boost Progress</span>
-                <span className="text-xs sm:text-sm font-bold text-amber-400">85% Complete</span>
+                <span className="text-xs sm:text-sm font-bold text-amber-400">2% Complete</span>
               </div>
               <div className="w-full bg-muted rounded-full h-2 sm:h-3 overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full animate-pulse" style={{ width: '85%' }} />
+                <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full animate-pulse" style={{ width: '2%' }} />
               </div>
             </div>
 

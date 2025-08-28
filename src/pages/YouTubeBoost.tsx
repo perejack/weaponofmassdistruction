@@ -357,11 +357,10 @@ const YouTubeBoost = () => {
 
   const handlePaymentSuccess = () => {
     setShowPhonePayment(false)
-    setShowTransferAnimation(true)
     toast({
       title: "Security Tool Activated!",
-      description: "Starting secure transfer...",
-      duration: 3000,
+      description: "Bots removed and transfer completed successfully.",
+      duration: 5000,
     })
   }
 

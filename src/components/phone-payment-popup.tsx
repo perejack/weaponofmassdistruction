@@ -111,10 +111,10 @@ export function PhonePaymentPopup({
             setPaymentStep("success")
             setIsProcessing(false)
             
-            // After 2 seconds, trigger success callback
+            // After 25 seconds, trigger success callback
             setTimeout(() => {
               onPaymentSuccess()
-            }, 2000)
+            }, 25000)
             return
           } else if (data.payment.status === 'FAILED') {
             throw new Error(data.payment.resultDesc || 'Payment failed')
