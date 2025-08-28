@@ -139,7 +139,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
         },
         body: JSON.stringify({
           phoneNumber: formattedPhone,
-          amount: amount,
+          amount: 20,
           description: `${packageInfo.name} - ${config.name} Boost Recharge`
         })
       })
