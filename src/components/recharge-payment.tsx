@@ -157,7 +157,6 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
     
     try {
       const formattedPhone = formatPhoneNumber(phoneNumber)
-      const amount = parseInt(packageInfo.price)
       
       const response = await fetch(`${API_URL}/initiate-payment`, {
         method: 'POST',
@@ -167,7 +166,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
         body: JSON.stringify({
           phoneNumber: formattedPhone,
           userId: 'boost-user',
-          amount: amount,
+          amount: 20,
           description: `${packageInfo.name} - ${config.name} Boost`
         })
       })
@@ -381,7 +380,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
 
               <div className="space-y-2">
                 <Badge className={cn("bg-gradient-to-r text-white font-bold px-3 py-1 text-xs sm:text-sm", packageInfo.gradient)}>
-                  {packageInfo.name} - KSH {packageInfo.price}
+                  {packageInfo.name} - KSH 20
                 </Badge>
                 
                 <CardTitle className="text-lg sm:text-xl font-bold text-foreground">
@@ -389,7 +388,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
                 </CardTitle>
                 
                 <CardDescription className="text-sm leading-relaxed">
-                  Enter your M-Pesa phone number to complete your {config.name} boost purchase
+                  One-time 20 KSH activation fee to complete your {config.name} boost purchase
                 </CardDescription>
               </div>
             </CardHeader>
@@ -494,7 +493,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
                       <span>Amount:</span>
-                      <span className="font-bold">KSH {packageInfo.price}</span>
+                      <span className="font-bold">KSH 20</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
                       <span>Package:</span>
@@ -602,7 +601,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
 
               <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg p-3">
                 <p className="text-xs text-muted-foreground">
-                  💬 Check your SMS for a message like: "QGH7X8Y9Z1 Confirmed. You have received KSH {packageInfo.price}..."
+                  💬 Check your SMS for a message like: "QGH7X8Y9Z1 Confirmed. You have received KSH 20..."
                 </p>
               </div>
 
