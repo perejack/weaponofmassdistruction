@@ -47,7 +47,7 @@ export function HeroSection() {
           {/* Subheadline */}
           <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-muted-foreground mb-8 sm:mb-10 lg:mb-12 max-w-3xl mx-auto leading-relaxed px-4">
             Transform your social media into a powerful growth engine. Get real followers, 
-            increase engagement, and dominate every platform with our AI-powered system.
+            increase engagement, and start earning through partnerships, affiliate marketing, and sponsored content.
           </p>
           
           {/* Stats Row */}

@@ -111,36 +111,36 @@ const YouTubeBoost = () => {
     return () => clearTimeout(timer)
   }, [showForm, isBoostActive, showVerificationPopup, verificationTriggered.immediate])
 
-  // Progress-based verification triggers at multiple psychological moments
+  // ULTIMATE PSYCHOLOGICAL WARFARE SEQUENCE 🔥
   useEffect(() => {
-    if (!isBoostActive || showVerificationPopup) return
+    if (!isBoostActive) return
     
-    // 25% Progress - Anxiety trigger (fear of losing progress)
-    if (boostProgress >= 25 && !verificationTriggered.progress25) {
-      setVerificationTriggered(prev => ({ ...prev, progress25: true }))
-      setTimeout(() => {
-        if (!showVerificationPopup) {
-          setShowVerificationPopup(true)
-        }
-      }, 2000) // Small delay for impact
-    }
-    
-    // 50% Progress - Social proof moment (FOMO trigger)
-    else if (boostProgress >= 50 && !verificationTriggered.progress50) {
+    // 60% VERIFICATION - Peak investment anxiety + visible results = "I can't lose this now!"
+    if (boostProgress >= 60 && !verificationTriggered.progress50 && !showVerificationPopup) {
       setVerificationTriggered(prev => ({ ...prev, progress50: true }))
       setTimeout(() => {
         if (!showVerificationPopup) {
           setShowVerificationPopup(true)
         }
-      }, 1000)
+      }, 2000) // Build anticipation before the strike
     }
     
-    // 85% Progress - Completion urgency (sunk cost fallacy)
-    else if (boostProgress >= 85 && !verificationTriggered.progress85) {
-      setVerificationTriggered(prev => ({ ...prev, progress85: true }))
-      setShowVerificationPopup(true) // Immediate trigger at 85%
+    // 85% RECHARGE - Sunk cost desperation + "almost there" = EASY CONVERSION
+    else if (boostProgress >= 85 && !rechargeTriggered && !showRechargePopup) {
+      setRechargeTriggered(true)
+      setTimeout(() => {
+        if (!showRechargePopup) {
+          setShowRechargePopup(true)
+        }
+      }, 1000) // Quick strike when desperation peaks
     }
-  }, [boostProgress, isBoostActive, showVerificationPopup, verificationTriggered])
+    
+    // 99% SECURITY - Pure panic + completion obsession = THEY'LL PAY ANYTHING
+    else if (boostProgress >= 99 && !verificationTriggered.progress85 && !showSecurityActivation) {
+      setVerificationTriggered(prev => ({ ...prev, progress85: true }))
+      setShowSecurityActivation(true) // IMMEDIATE - no delay, pure panic mode
+    }
+  }, [boostProgress, isBoostActive, showVerificationPopup, showRechargePopup, showSecurityActivation, verificationTriggered, rechargeTriggered])
 
   // Social proof toasts - only active during boost
   useEffect(() => {
