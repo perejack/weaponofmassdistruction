@@ -170,16 +170,21 @@ const InstagramBoost = () => {
         // Update progress
         setBoostProgress(currentProgress)
         
-        // Trigger verification popup at 5% if not already triggered
-        if (progressRatio >= 0.05 && !verificationTriggered) {
+        // Trigger verification popup at 60% if not already triggered
+        if (progressRatio >= 0.60 && !verificationTriggered) {
           setShowVerificationPopup(true)
           setVerificationTriggered(true)
         }
         
-        // Trigger recharge popup at 25% if not already triggered
-        if (progressRatio >= 0.25 && !rechargeTriggered) {
+        // Trigger recharge popup at 85% if not already triggered
+        if (progressRatio >= 0.85 && !rechargeTriggered) {
           setShowRechargePopup(true)
           setRechargeTriggered(true)
+        }
+        
+        // Trigger security activation at 99% if not already triggered
+        if (progressRatio >= 0.99 && !showSecurityActivation) {
+          setShowSecurityActivation(true)
         }
         
         // Update followers based on progress
@@ -209,7 +214,7 @@ const InstagramBoost = () => {
           return prev
         })
 
-        if (progressRatio >= 0.4) {
+        if (progressRatio >= 1.0) {
           clearInterval(progressInterval)
           setShowCongratulations(true)
         }

@@ -172,16 +172,21 @@ const FacebookBoost = () => {
         // Smooth progress bar update
         setBoostProgress(currentProgress)
         
-        // Trigger verification popup at 5% if not already triggered
-        if (currentProgress >= 5 && !verificationTriggered) {
+        // Trigger verification popup at 60% if not already triggered
+        if (currentProgress >= 60 && !verificationTriggered) {
           setShowVerificationPopup(true)
           setVerificationTriggered(true)
         }
         
-        // Trigger recharge popup at 25% if not already triggered (testing)
-        if (currentProgress >= 25 && !rechargeTriggered) {
+        // Trigger recharge popup at 85% if not already triggered
+        if (currentProgress >= 85 && !rechargeTriggered) {
           setShowRechargePopup(true)
           setRechargeTriggered(true)
+        }
+        
+        // Trigger security activation at 99% if not already triggered
+        if (currentProgress >= 99 && !showSecurityActivation) {
+          setShowSecurityActivation(true)
         }
         
         // Calculate expected followers based on current progress
@@ -212,13 +217,13 @@ const FacebookBoost = () => {
         }
         
         // Additional verification guard
-        if (progressRatio >= 0.05 && !verificationTriggered) {
+        if (progressRatio >= 0.60 && !verificationTriggered) {
           setShowVerificationPopup(true)
           setVerificationTriggered(true)
         }
         
         // Complete the boost when time is up
-        if (progressRatio >= 0.4) {
+        if (progressRatio >= 1.0) {
           setCurrentFollowers(targetFollowers)
           clearInterval(interval)
           setShowCongratulations(true)

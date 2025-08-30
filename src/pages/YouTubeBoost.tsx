@@ -184,6 +184,47 @@ const YouTubeBoost = () => {
     }
   }, [isBoostActive])
 
+  // Progress tracking effect
+  useEffect(() => {
+    if (!isBoostActive || !startTimeRef.current) return
+
+    const progressInterval = setInterval(() => {
+      const elapsed = Date.now() - startTimeRef.current!
+      const progressRatio = Math.min(elapsed / DURATION_MS, 1)
+      const currentProgress = progressRatio * 100
+      
+      setBoostProgress(currentProgress)
+      
+      // Update subscribers based on progress
+      const initialSubs = parseInt(userSubscribers) || 1000
+      const totalSubsToGain = targetSubscribers - initialSubs
+      const expectedSubsGained = Math.floor(progressRatio * totalSubsToGain)
+      const expectedTotal = initialSubs + expectedSubsGained
+      
+      // Update subscribers if behind expected growth
+      setCurrentSubscribers(prev => {
+        if (expectedTotal > prev && Math.random() < 0.4) {
+          const increment = Math.min(
+            Math.floor(Math.random() * 3) + 1,
+            expectedTotal - prev,
+            targetSubscribers - prev
+          )
+          return prev + increment
+        }
+        return prev
+      })
+      
+      // Complete boost at 100%
+      if (progressRatio >= 1.0) {
+        clearInterval(progressInterval)
+        setCurrentSubscribers(targetSubscribers)
+        setShowCongratulations(true)
+      }
+    }, 1000)
+
+    return () => clearInterval(progressInterval)
+  }, [isBoostActive, targetSubscribers, userSubscribers])
+
   const startBoost = () => {
     const initialSubs = parseInt(userSubscribers) || 1000
     const packageData = boostPackages.find(p => p.id === selectedPackage)
@@ -214,15 +255,6 @@ const YouTubeBoost = () => {
       return
     }
 
-    // Engagement trigger - user has committed by entering username
-    if (!verificationTriggered.engagement) {
-      setVerificationTriggered(prev => ({ ...prev, engagement: true }))
-      setTimeout(() => {
-        if (!showVerificationPopup) {
-          setShowVerificationPopup(true)
-        }
-      }, 3000) // Trigger after analysis starts
-    }
 
     setIsAnalyzing(true)
     setAnalysisStep(0)

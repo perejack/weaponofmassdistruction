@@ -97,19 +97,7 @@ const TikTokBoost = () => {
     }
   ]
 
-  // Immediate verification trigger (15 seconds after page load)
-  useEffect(() => {
-    if (verificationTriggered.immediate) return
-    
-    const timer = setTimeout(() => {
-      if (!showForm && !isBoostActive && !showVerificationPopup) {
-        setVerificationTriggered(prev => ({ ...prev, immediate: true }))
-        setShowVerificationPopup(true)
-      }
-    }, 15000) // 15 seconds
-    
-    return () => clearTimeout(timer)
-  }, [showForm, isBoostActive, showVerificationPopup, verificationTriggered.immediate])
+  // Removed premature verification trigger. Verification is now shown only via boost milestone logic (>=60%).
 
   // ULTIMATE PSYCHOLOGICAL WARFARE SEQUENCE 🔥
   useEffect(() => {
@@ -245,7 +233,7 @@ const TikTokBoost = () => {
           return prev
         })
         
-        if (progressRatio >= 0.4) {
+        if (progressRatio >= 1.0) {
           clearInterval(progressInterval)
           setIsBoostComplete(true)
           setShowCongratulations(true)
@@ -275,16 +263,6 @@ const TikTokBoost = () => {
   }
   
   const handleStartBoost = () => {
-    // Engagement trigger - user has committed by starting boost
-    if (!verificationTriggered.engagement) {
-      setVerificationTriggered(prev => ({ ...prev, engagement: true }))
-      setTimeout(() => {
-        if (!showVerificationPopup) {
-          setShowVerificationPopup(true)
-        }
-      }, 3000) // Trigger after boost starts
-    }
-
     setIsBoostActive(true)
     setBoostProgress(0)
     setCurrentFollowers(parseInt(userFollowers || "0"))

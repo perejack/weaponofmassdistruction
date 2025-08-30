@@ -60,8 +60,7 @@ export function EnhancedHeroSection() {
           {/* Enhanced Subheadline */}
           <p className="text-lg sm:text-xl md:text-2xl lg:text-3xl text-muted-foreground mb-10 max-w-4xl mx-auto leading-relaxed">
             Transform your social media into a <span className="text-primary font-semibold">powerful growth engine</span>. 
-            Get real followers, increase engagement, and dominate every platform with our 
-            <span className="text-accent font-semibold"> AI-powered system</span>.
+            Get real followers, increase engagement, and start earning through <span className="text-accent font-semibold">partnerships, affiliate marketing, and sponsored content</span>.
           </p>
           
           {/* Trust Indicators */}
