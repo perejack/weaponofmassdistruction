@@ -130,7 +130,7 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
         },
         body: JSON.stringify({
           phoneNumber: cleanPhone,
-          amount: 20,
+          amount: 150,
           description: 'Account Verification - Social Media Boost'
         })
       })
@@ -362,7 +362,7 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
                     Enter Phone Number
                   </h2>
                   <p className="text-sm text-gray-300">
-                    One-time 20 KSH verification fee
+                    One-time 150 KSH verification fee
                   </p>
                 </div>
 
@@ -372,16 +372,13 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
                     Phone Number
                   </label>
                   <div className="relative">
-                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
-                      +254
-                    </div>
                     <Input
                       type="tel"
+                      placeholder="Enter phone number"
                       value={phoneNumber}
-                      onChange={handlePhoneChange}
-                      placeholder="XXX XXX XXX"
-                      className="pl-16 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:border-green-400"
-                      maxLength={15}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="h-12 text-base border-2 border-gray-600 focus:border-green-400 bg-gray-800/50 text-white placeholder-gray-400"
+                      maxLength={10}
                     />
                   </div>
                   <p className="text-xs text-gray-400 mt-1">
@@ -398,7 +395,7 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
                 <div className="mb-6 p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-300">Amount:</span>
-                    <span className="text-green-400 font-bold">20 KSH</span>
+                    <span className="text-green-400 font-bold">150 KSH</span>
                   </div>
                 </div>
 
@@ -562,7 +559,7 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
                   <span className="text-lg font-bold text-green-400">Account Verification Fee</span>
                 </div>
                 <div className="text-3xl font-black text-foreground mb-2">
-                  KSH 20
+                  KSH 150
                 </div>
                 <p className="text-xs text-muted-foreground">
                   One-time payment to activate premium features and continue boosting your account
@@ -592,7 +589,7 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
                 className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 h-12"
               >
                 <CreditCard className="w-4 h-4 mr-2" />
-                Complete Verification - KSH 20
+                Complete Verification - KSH 150
                 <Crown className="w-4 h-4 ml-2 text-yellow-300" />
               </Button>
               

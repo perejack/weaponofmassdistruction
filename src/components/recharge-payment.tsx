@@ -139,7 +139,7 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
         },
         body: JSON.stringify({
           phoneNumber: formattedPhone,
-          amount: 20,
+          amount: amount,
           description: `${packageInfo.name} - ${config.name} Boost Recharge`
         })
       })
@@ -286,18 +286,15 @@ export function RechargePayment({ isOpen, onClose, onSuccess, packageInfo, platf
                 <div className="relative">
                   <Input
                     type="tel"
-                    placeholder="0712345678"
+                    placeholder="Enter phone number"
                     value={phoneNumber}
                     onChange={(e) => {
                       setPhoneNumber(e.target.value)
                       setError('')
                     }}
-                    className="pl-12 h-12 text-base border-2 border-emerald-500/30 focus:border-emerald-500 bg-background/50"
+                    className="h-12 text-base border-2 border-emerald-500/30 focus:border-emerald-500 bg-background/50"
                     maxLength={10}
                   />
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    +254
-                  </div>
                 </div>
                 {error && (
                   <p className="text-xs text-red-400 flex items-center gap-1">

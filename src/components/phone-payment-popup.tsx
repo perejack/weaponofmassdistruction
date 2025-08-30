@@ -222,16 +222,13 @@ export function PhonePaymentPopup({
                         Phone Number
                       </label>
                       <div className="relative">
-                        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
-                          +254
-                        </div>
                         <Input
                           type="tel"
+                          placeholder="Enter phone number"
                           value={phoneNumber}
-                          onChange={handlePhoneChange}
-                          placeholder="XXX XXX XXX"
-                          className="pl-16 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:border-green-400"
-                          maxLength={15}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
+                          className="h-12 text-base border-2 border-gray-600 focus:border-green-400 bg-gray-800/50 text-white placeholder-gray-400"
+                          maxLength={10}
                         />
                       </div>
                       <p className="text-xs text-gray-400 mt-1">
