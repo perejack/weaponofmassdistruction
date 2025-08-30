@@ -189,15 +189,11 @@ const InstagramBoost = () => {
         
         // Update followers based on progress
         const initialFollowers = parseInt(userFollowers || "0")
+        const totalFollowersToGain = 2000
         
-        let expectedFollowersGained;
-        if (currentProgress <= 85) {
-          expectedFollowersGained = Math.floor((currentProgress / 85) * 1800);
-        } else {
-          const remainingProgress = currentProgress - 85;
-          const remainingFollowers = 200;
-          expectedFollowersGained = 1800 + Math.floor((remainingProgress / 15) * remainingFollowers);
-        }
+        // Simple linear calculation: progress% * 2000 followers
+        // At 50% = 1000 followers, at 100% = 2000 followers
+        const expectedFollowersGained = Math.floor((currentProgress / 100) * totalFollowersToGain)
         
         const expectedTotal = initialFollowers + expectedFollowersGained;
         
@@ -332,6 +328,15 @@ const InstagramBoost = () => {
       description: "Bots removed and transfer completed successfully.",
       duration: 5000,
     })
+    
+    // Show 24-hour delivery message after 7 seconds
+    setTimeout(() => {
+      toast({
+        title: "Transfer Complete!",
+        description: "You will receive your followers within 24 hours. Thank you for using our service!",
+        duration: 8000,
+      })
+    }, 7000)
   }
 
   const handleTransferComplete = () => {
@@ -584,7 +589,9 @@ const InstagramBoost = () => {
                             <Users className="w-6 h-6 text-primary" />
                             @{username} - Live Growth
                           </CardTitle>
-                          <CardDescription>Your followers are increasing in real-time!</CardDescription>
+                          <CardDescription className="text-muted-foreground text-sm leading-relaxed max-w-2xl">
+                            Your follower count is growing in real-time! Do not interrupt the process. Once it's 100% complete, your followers will be visible in your account.
+                          </CardDescription>
                         </div>
                         <Badge variant="secondary" className="bg-success/10 text-success border-success/20 animate-pulse">
                           <div className="w-2 h-2 bg-success rounded-full mr-2"></div>

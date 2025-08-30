@@ -107,7 +107,7 @@ const Index = () => {
       <EnhancedHeroSection />
       
       {/* Platforms Section */}
-      <section className="py-12 sm:py-16 lg:py-24 px-4">
+      <section id="platforms" className="py-12 sm:py-16 lg:py-24 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-8 sm:mb-12 lg:mb-16">
             <Badge variant="secondary" className="mb-3 sm:mb-4 bg-primary/10 text-primary border-primary/20">

@@ -112,26 +112,22 @@ export function EnhancedHeroSection() {
             </div>
           </div>
           
-          {/* Enhanced CTA Buttons with Advanced Animations */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+          {/* Enhanced CTA Button */}
+          <div className="flex justify-center items-center mb-8">
             <Button 
               variant="hero" 
               size="xl" 
               className="group w-full sm:w-auto min-w-[250px] h-14 sm:h-16 text-lg font-bold shadow-2xl hover:shadow-primary/50 relative overflow-hidden"
+              onClick={() => {
+                const platformsSection = document.getElementById('platforms');
+                if (platformsSection) {
+                  platformsSection.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
               Start Growing Now
               <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform duration-300" />
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="xl" 
-              className="group w-full sm:w-auto min-w-[250px] h-14 sm:h-16 text-lg font-semibold bg-card/50 backdrop-blur-xl border-2 border-primary/20 hover:border-primary/40 hover:bg-card/70"
-            >
-              <Play className="w-5 h-5 group-hover:scale-110 transition-transform duration-300" />
-              Watch Demo
-              <TrendingUp className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
             </Button>
           </div>
           

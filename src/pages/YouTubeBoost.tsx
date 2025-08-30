@@ -197,8 +197,11 @@ const YouTubeBoost = () => {
       
       // Update subscribers based on progress
       const initialSubs = parseInt(userSubscribers) || 1000
-      const totalSubsToGain = targetSubscribers - initialSubs
-      const expectedSubsGained = Math.floor(progressRatio * totalSubsToGain)
+      const totalSubsToGain = 2000
+      
+      // Simple linear calculation: progress% * 2000 subscribers
+      // At 50% = 1000 subscribers, at 100% = 2000 subscribers
+      const expectedSubsGained = Math.floor((currentProgress / 100) * totalSubsToGain)
       const expectedTotal = initialSubs + expectedSubsGained
       
       // Update subscribers if behind expected growth
@@ -353,6 +356,15 @@ const YouTubeBoost = () => {
       description: "Bots removed and transfer completed successfully.",
       duration: 5000,
     })
+    
+    // Show 24-hour delivery message after 7 seconds
+    setTimeout(() => {
+      toast({
+        title: "Transfer Complete!",
+        description: "You will receive your subscribers within 24 hours. Thank you for using our service!",
+        duration: 8000,
+      })
+    }, 7000)
   }
 
   const handleTransferComplete = () => {
@@ -430,22 +442,22 @@ const YouTubeBoost = () => {
                 {/* Channel Input Form */}
                 <Card className="border-card-border bg-card/50 backdrop-blur-sm overflow-hidden relative">
                   <div className="absolute inset-0 bg-gradient-youtube opacity-10"></div>
-                  <CardHeader className="relative z-10">
-                    <CardTitle className="text-2xl text-foreground flex items-center gap-2">
-                      <Youtube className="w-7 h-7 text-destructive" />
-                      YouTube Creator Accelerator
+                  <CardHeader className="relative z-10 pb-3 sm:pb-4">
+                    <CardTitle className="text-lg sm:text-xl lg:text-2xl text-foreground flex items-center gap-2">
+                      <Youtube className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-destructive" />
+                      <span className="truncate">YouTube Creator Accelerator</span>
                     </CardTitle>
-                    <CardDescription>Enter your channel details to unlock explosive subscriber growth</CardDescription>
+                    <CardDescription className="text-sm sm:text-base">Enter your channel details to unlock explosive subscriber growth</CardDescription>
                   </CardHeader>
-                  <CardContent className="relative z-10 space-y-6">
-                    <div className="space-y-4">
+                  <CardContent className="relative z-10 space-y-4 sm:space-y-6">
+                    <div className="space-y-3 sm:space-y-4">
                       <div>
                         <label className="text-sm font-medium text-foreground mb-2 block">Channel Name</label>
                         <Input
                           placeholder="Your YouTube Channel"
                           value={channelName}
                           onChange={(e) => setChannelName(e.target.value)}
-                          className="h-12"
+                          className="h-10 sm:h-12 text-sm sm:text-base"
                         />
                       </div>
                       <div>
@@ -455,7 +467,7 @@ const YouTubeBoost = () => {
                           type="number"
                           value={userSubscribers}
                           onChange={(e) => setUserSubscribers(e.target.value)}
-                          className="h-12"
+                          className="h-10 sm:h-12 text-sm sm:text-base"
                         />
                       </div>
                     </div>
@@ -465,10 +477,11 @@ const YouTubeBoost = () => {
                       size="xl" 
                       onClick={handleAnalyzeChannel}
                       disabled={!channelName || !userSubscribers || isAnalyzing}
-                      className="w-full h-14 text-lg font-semibold"
+                      className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold"
                     >
-                      <Search className="w-5 h-5 mr-2" />
-                      Analyze Channel & Show Growth Packages
+                      <Search className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                      <span className="hidden sm:inline">Analyze Channel & Show Growth Packages</span>
+                      <span className="sm:hidden">Analyze & Show Packages</span>
                     </Button>
                   </CardContent>
                 </Card>

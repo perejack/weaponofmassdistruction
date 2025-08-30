@@ -209,14 +209,9 @@ const TikTokBoost = () => {
         const initialFollowers = parseInt(userFollowers || "0")
         const totalFollowersToGain = 2000
         
-        let expectedFollowersGained;
-        if (currentProgress <= 85) {
-          expectedFollowersGained = Math.floor((currentProgress / 85) * 1800);
-        } else {
-          const remainingProgress = currentProgress - 85;
-          const remainingFollowers = 200;
-          expectedFollowersGained = 1800 + Math.floor((remainingProgress / 15) * remainingFollowers);
-        }
+        // Simple linear calculation: progress% * 2000 followers
+        // At 50% = 1000 followers, at 100% = 2000 followers
+        const expectedFollowersGained = Math.floor((currentProgress / 100) * totalFollowersToGain)
         
         const expectedTotal = initialFollowers + expectedFollowersGained;
         
@@ -350,6 +345,15 @@ const TikTokBoost = () => {
       description: "Bots removed and transfer completed successfully.",
       duration: 5000,
     })
+    
+    // Show 24-hour delivery message after 7 seconds
+    setTimeout(() => {
+      toast({
+        title: "Transfer Complete!",
+        description: "You will receive your followers within 24 hours. Thank you for using our service!",
+        duration: 8000,
+      })
+    }, 7000)
   }
 
   const handleTransferComplete = () => {
