@@ -215,15 +215,11 @@ const TikTokBoost = () => {
         
         const expectedTotal = initialFollowers + expectedFollowersGained;
         
-        // Update followers if behind expected growth
+        // Update followers to match expected growth exactly
         setCurrentFollowers(prev => {
-          if (expectedTotal > prev && Math.random() < 0.4) {
-            const increment = Math.min(
-              Math.floor(Math.random() * 3) + 1,
-              expectedTotal - prev,
-              targetFollowers - prev
-            )
-            return prev + increment
+          // Ensure we're always moving towards the expected total
+          if (expectedTotal > prev) {
+            return expectedTotal
           }
           return prev
         })
@@ -462,7 +458,7 @@ const TikTokBoost = () => {
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-foreground mb-2 block">Current Followers</label>
+                        <label className="text-sm font-medium text-foreground mb-2 block">Number of followers you have</label>
                         <Input
                           placeholder="500"
                           type="number"

@@ -199,20 +199,15 @@ const YouTubeBoost = () => {
       const initialSubs = parseInt(userSubscribers) || 1000
       const totalSubsToGain = 2000
       
-      // Simple linear calculation: progress% * 2000 subscribers
-      // At 50% = 1000 subscribers, at 100% = 2000 subscribers
+      // Fixed calculation: ensures exactly 1000 gained at 50% and 2000 gained at 100%
       const expectedSubsGained = Math.floor((currentProgress / 100) * totalSubsToGain)
       const expectedTotal = initialSubs + expectedSubsGained
       
-      // Update subscribers if behind expected growth
+      // Update subscribers to match expected growth exactly
       setCurrentSubscribers(prev => {
-        if (expectedTotal > prev && Math.random() < 0.4) {
-          const increment = Math.min(
-            Math.floor(Math.random() * 3) + 1,
-            expectedTotal - prev,
-            targetSubscribers - prev
-          )
-          return prev + increment
+        // Ensure we're always moving towards the expected total
+        if (expectedTotal > prev) {
+          return expectedTotal
         }
         return prev
       })
@@ -461,7 +456,7 @@ const YouTubeBoost = () => {
                         />
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-foreground mb-2 block">Current Subscribers</label>
+                        <label className="text-sm font-medium text-foreground mb-2 block">Number of subscribers you have</label>
                         <Input
                           placeholder="500"
                           type="number"
