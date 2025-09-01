@@ -410,16 +410,6 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
                     Verify and Finish
                   </Button>
 
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      setShowPhonePayment(false)
-                      setShowPayment(true)
-                    }}
-                    className="w-full text-gray-400 hover:text-white hover:bg-white/10 text-sm"
-                  >
-                    Cancel
-                  </Button>
                 </div>
               </>
             )}
@@ -593,13 +583,6 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
                 <Crown className="w-4 h-4 ml-2 text-yellow-300" />
               </Button>
               
-              <Button
-                variant="outline"
-                onClick={onClose}
-                className="w-full hover:bg-red-500/10 hover:border-red-500/50 text-sm"
-              >
-                Cancel Verification
-              </Button>
             </div>
             
             {/* Security note */}
