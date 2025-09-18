@@ -343,7 +343,7 @@ export function SecuritySoftware({
                     </h3>
                     
                     <div className="flex items-center justify-center mb-4">
-                      <span className="text-3xl font-bold text-green-400">150 KSH</span>
+                      <span className="text-3xl font-bold text-green-400">120 KSH</span>
                       <div className="ml-4 text-left">
                         <p className="text-gray-400 line-through">Regular: 500 KSH</p>
                         <p className="text-green-400 font-semibold">Save 50% Today!</p>
@@ -389,7 +389,7 @@ export function SecuritySoftware({
                       className="relative w-full py-3 text-base font-bold bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg transform transition-all duration-200 hover:scale-105"
                     >
                       <Shield className="w-5 h-5 mr-2" />
-                      Activate - 150 KSH
+                      Activate - 120 KSH
                       <Zap className="w-5 h-5 ml-2" />
                     </Button>
                   </div>
