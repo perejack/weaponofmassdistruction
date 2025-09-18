@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Social Media Growth Platform Design System - Premium & Persuasive */
+
+@layer base {
+  :root {
+    /* Base Colors */
+    --background: 220 15% 3%;
+    --foreground: 210 40% 98%;
+
+    /* Card System */
+    --card: 220 15% 5%;
+    --card-foreground: 210 40% 98%;
+    --card-border: 220 15% 12%;
+
+    /* Interactive Elements */
+    --popover: 220 15% 8%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Brand Colors - Social Platform Inspired */
+    --primary: 217 91% 60%;        /* Deep Trust Blue */
+    --primary-foreground: 210 40% 98%;
+    --primary-glow: 217 91% 70%;
+
+    /* Secondary - Viral Energy */
+    --secondary: 0 84% 60%;        /* YouTube Red */
+    --secondary-foreground: 210 40% 98%;
+    --secondary-glow: 0 84% 70%;
+
+    /* Accent - Instagram Vibes */
+    --accent: 291 64% 42%;         /* Instagram Purple */
+    --accent-foreground: 210 40% 98%;
+    --accent-glow: 291 64% 52%;
+
+    /* Status Colors */
+    --success: 142 76% 36%;
+    --success-glow: 142 76% 46%;
+    --warning: 48 96% 53%;
+    --destructive: 0 84% 60%;
+
+    /* Neutral Tones */
+    --muted: 220 15% 8%;
+    --muted-foreground: 215 20% 65%;
+    --border: 220 15% 12%;
+    --input: 220 15% 8%;
+    --ring: 217 91% 60%;
+
+    /* Design Tokens */
+    --radius: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--secondary-glow)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-glow)));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(var(--success-glow)));
+    
+    /* Social Gradients */
+    --gradient-instagram: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+    --gradient-tiktok: linear-gradient(135deg, #000000, #ff0050);
+    --gradient-youtube: linear-gradient(135deg, #ff0000, #cc0000);
+    --gradient-facebook: linear-gradient(135deg, #3b5998, #1877f2);
+
+    /* Shadows & Glows */
+    --shadow-primary: 0 10px 30px -10px hsl(var(--primary) / 0.3);
+    --shadow-secondary: 0 10px 30px -10px hsl(var(--secondary) / 0.3);
+    --shadow-accent: 0 10px 30px -10px hsl(var(--accent) / 0.3);
+    --shadow-glow: 0 0 40px hsl(var(--primary-glow) / 0.4);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bouncy: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-mobile: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Mobile-first spacing */
+    --spacing-mobile-xs: 0.5rem;
+    --spacing-mobile-sm: 0.75rem;
+    --spacing-mobile-md: 1rem;
+    --spacing-mobile-lg: 1.5rem;
+    --spacing-mobile-xl: 2rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
