@@ -749,19 +749,11 @@ export function VerificationPopup({ username, currentFollowers, isOpen, onClose,
 
           {/* Action Buttons - Only show on main screen */}
           {!showBenefits && (
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Button
-                variant="outline"
-                onClick={onClose}
-                className="flex-1 hover:bg-red-500/10 hover:border-red-500/50 h-10 sm:h-12 text-xs sm:text-sm"
-              >
-                Continue Unverified
-                <span className="text-xs text-red-400 ml-2 hidden sm:inline">(Limited Growth)</span>
-              </Button>
+            <div className="flex flex-col gap-3 pt-4">
               <Button
                 onClick={handleStartVerification}
                 variant="default"
-                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 h-10 sm:h-12 text-xs sm:text-sm"
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 h-12 sm:h-14 text-sm sm:text-base"
               >
                 <Unlock className="w-4 h-4 mr-2" />
                 Verify Account Now
